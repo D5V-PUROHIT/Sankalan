@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sankalan - Deep Learning Data Generator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Plotly for charts -->
+    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fa-solid fa-layer-group"></i>
+                    <span>Sankalan</span>
+                </div>
+            </div>
+            <ul class="nav-links">
+                <li class="active" data-tab="tab-upload">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                    <span>Upload Data</span>
+                </li>
+                <li data-tab="tab-overview">
+                    <i class="fa-solid fa-table"></i>
+                    <span>Dataset Overview</span>
+                </li>
+                <li data-tab="tab-eda">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>EDA</span>
+                </li>
+                <li data-tab="tab-generate">
+                    <i class="fa-solid fa-brain"></i>
+                    <span>Generate Synthetic Data</span>
+                </li>
+                <li data-tab="tab-compare">
+                    <i class="fa-solid fa-code-compare"></i>
+                    <span>Real vs Synthetic</span>
+                </li>
+                <li data-tab="tab-report">
+                    <i class="fa-solid fa-file-contract"></i>
+                    <span>Quality Report</span>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <header class="topbar">
+                <h1>Data Augmentation Platform</h1>
+                <div class="user-info">
+                    <div class="status-indicator">
+                        <span class="dot"></span>
+                        <span id="system-status">System Ready</span>
+                    </div>
+                </div>
+            </header>
+
+            <div class="tab-content-container">
+                <!-- Tab: Upload -->
+                <section id="tab-upload" class="tab-pane active fade-in">
+                    <div class="upload-container glass-card">
+                        <h2>Upload Dataset</h2>
+                        <p>Upload a CSV or Excel file to begin profiling and generating synthetic data.</p>
+                        
+                        <div class="drop-zone" id="drop-zone">
+                            <i class="fa-solid fa-file-csv upload-icon"></i>
+                            <h3>Drag & Drop your file here</h3>
+                            <p>or</p>
+                            <input type="file" id="file-input" accept=".csv, .xlsx" hidden>
+                            <button class="btn btn-primary" onclick="document.getElementById('file-input').click()">Browse Files</button>
+                        </div>
+                        
+                        <div id="upload-status" class="status-message hidden">
+                            <div class="loader"></div>
+                            <span id="upload-text">Uploading and profiling...</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Tab: Overview -->
+                <section id="tab-overview" class="tab-pane fade-in">
+                    <div class="glass-card">
+                        <h2>Dataset Overview</h2>
+                        <div class="stats-grid" id="overview-stats">
+                            <!-- Stats injected via JS -->
+                        </div>
+                        <div class="table-container" id="overview-table">
+                            <!-- Table injected via JS -->
+                            <p class="placeholder-text">Please upload a dataset first.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Tab: EDA -->
+                <section id="tab-eda" class="tab-pane fade-in">
+                    <div class="glass-card">
+                        <h2>Exploratory Data Analysis</h2>
+                        <div class="charts-grid">
+                            <div class="chart-card" id="chart-distribution"></div>
+                            <div class="chart-card" id="chart-correlation"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Tab: Generate -->
+                <section id="tab-generate" class="tab-pane fade-in">
+                    <div class="glass-card">
+                        <h2>Train VAE & Generate Data</h2>
+                        <div class="generation-controls">
+                            <div class="control-group">
+                                <label for="num-records">Number of Synthetic Records</label>
+                                <input type="number" id="num-records" value="5000" min="100">
+                            </div>
+                            <div class="control-group">
+                                <label for="epochs">Training Epochs</label>
+                                <input type="number" id="epochs" value="50" min="10" max="500">
+                            </div>
+                            <button class="btn btn-primary btn-large" id="btn-generate">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> Generate Data
+                            </button>
+                        </div>
+                        <div id="generation-progress" class="hidden">
+                            <div class="progress-bar-container">
+                                <div class="progress-bar" id="gen-progress-bar"></div>
+                            </div>
+                            <p id="gen-status-text">Training VAE model...</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Tab: Compare -->
+                <section id="tab-compare" class="tab-pane fade-in">
+                    <div class="glass-card">
+                        <h2>Real vs Synthetic Comparison</h2>
+                        <div class="comparison-grid">
+                            <div class="chart-card" id="compare-dist-real"></div>
+                            <div class="chart-card" id="compare-dist-synth"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Tab: Report -->
+                <section id="tab-report" class="tab-pane fade-in">
+                    <div class="glass-card">
+                        <h2>Quality Report</h2>
+                        <div class="score-card">
+                            <h3>Overall Quality Score</h3>
+                            <div class="score-circle" id="quality-score">--</div>
+                        </div>
+                        <div class="download-section">
+                            <button class="btn btn-success" id="btn-download-csv">
+                                <i class="fa-solid fa-download"></i> Download Synthetic Data (CSV)
+                            </button>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+    <script src="js/script.js"></script>
+</body>
+</html>
