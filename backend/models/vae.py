@@ -49,6 +49,8 @@ def compute_reconstruction_loss(x_true, x_recon, feature_map):
     Computes MSE for numeric features and Categorical Crossentropy for One-Hot features
     based on the feature_map slices.
     """
+    x_true = tf.cast(x_true, tf.float32)
+    x_recon = tf.cast(x_recon, tf.float32)
     loss = 0.0
     for feature in feature_map:
         start = feature["start"]
@@ -80,6 +82,8 @@ def get_beta(epoch, total_epochs, target_beta=1.0, warmup_frac=0.25):
 
 @tf.function
 def train_step(model, data, optimizer, feature_map, beta):
+    data = tf.cast(data, tf.float32)
+    beta = tf.cast(beta, tf.float32)
     with tf.GradientTape() as tape:
         reconstructed, z_mean, z_log_var = model(data)
         
@@ -104,6 +108,7 @@ def train_vae(X_train, feature_map, latent_dim=8, epochs=50, batch_size=32):
     Sets up the dataset, optimizer, and training loop.
     Returns the trained model and training history.
     """
+    X_train = np.asarray(X_train, dtype=np.float32)
     input_dim = X_train.shape[1]
     vae = VAE(input_dim, latent_dim, feature_map)
     optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)

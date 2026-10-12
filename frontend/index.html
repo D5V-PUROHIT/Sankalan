@@ -3,57 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sankalan - Deep Learning Data Generator</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css">
-    <!-- Plotly for charts -->
-    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+    <title>Sankalan - Deep Learning Tabular Data Augmentation & Analytics Platform</title>
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Plotly.js -->
+    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <div class="app-container">
         <!-- Sidebar Navigation -->
-        <nav class="sidebar">
+        <aside class="sidebar">
             <div class="sidebar-header">
                 <div class="logo">
-                    <i class="fa-solid fa-layer-group"></i>
-                    <span>Sankalan</span>
+                    <div class="logo-icon">
+                        <i class="fa-solid fa-network-wired"></i>
+                    </div>
+                    <div class="logo-text">
+                        <span class="brand-name">Sankalan</span>
+                        <span class="brand-sub">VAE Data Platform</span>
+                    </div>
                 </div>
             </div>
-            <ul class="nav-links">
-                <li class="active" data-tab="tab-upload">
-                    <i class="fa-solid fa-cloud-arrow-up"></i>
-                    <span>Upload Data</span>
-                </li>
-                <li data-tab="tab-overview">
-                    <i class="fa-solid fa-table"></i>
-                    <span>Dataset Overview</span>
-                </li>
-                <li data-tab="tab-eda">
-                    <i class="fa-solid fa-chart-pie"></i>
-                    <span>EDA</span>
-                </li>
-                <li data-tab="tab-generate">
-                    <i class="fa-solid fa-brain"></i>
-                    <span>Generate Synthetic Data</span>
-                </li>
-                <li data-tab="tab-compare">
-                    <i class="fa-solid fa-code-compare"></i>
-                    <span>Real vs Synthetic</span>
-                </li>
-                <li data-tab="tab-report">
-                    <i class="fa-solid fa-file-contract"></i>
-                    <span>Quality Report</span>
-                </li>
-            </ul>
-        </nav>
+            
+            <nav class="sidebar-nav">
+                <ul class="nav-links">
+                    <li class="active" data-tab="tab-upload">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                        <span>Upload Dataset</span>
+                    </li>
+                    <li data-tab="tab-overview">
+                        <i class="fa-solid fa-table-cells"></i>
+                        <span>Dataset Overview</span>
+                    </li>
+                    <li data-tab="tab-eda">
+                        <i class="fa-solid fa-chart-simple"></i>
+                        <span>Exploratory Analytics</span>
+                    </li>
+                    <li data-tab="tab-generate">
+                        <i class="fa-solid fa-microchip"></i>
+                        <span>Train & Generate VAE</span>
+                    </li>
+                    <li data-tab="tab-compare">
+                        <i class="fa-solid fa-code-compare"></i>
+                        <span>Real vs Synthetic</span>
+                    </li>
+                    <li data-tab="tab-report">
+                        <i class="fa-solid fa-award"></i>
+                        <span>Quality Report</span>
+                    </li>
+                </ul>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="project-tag">
+                    <span class="tag-badge">Generative AI</span>
+                    <span class="tag-version">v2.0 • TensorFlow</span>
+                </div>
+            </div>
+        </aside>
 
         <!-- Main Content Area -->
         <main class="main-content">
+            <!-- Topbar -->
             <header class="topbar">
-                <h1>Data Augmentation Platform</h1>
-                <div class="user-info">
-                    <div class="status-indicator">
+                <div class="topbar-left">
+                    <h1 id="page-title">Dataset Upload & Ingestion</h1>
+                    <p class="topbar-desc" id="page-desc">Load tabular CSV or Excel records to begin deep learning synthesis</p>
+                </div>
+                <div class="topbar-right">
+                    <div class="status-indicator" id="status-badge">
                         <span class="dot"></span>
                         <span id="system-status">System Ready</span>
                     </div>
@@ -61,107 +83,393 @@
             </header>
 
             <div class="tab-content-container">
-                <!-- Tab: Upload -->
+                <!-- ================= TAB 1: UPLOAD ================= -->
                 <section id="tab-upload" class="tab-pane active fade-in">
-                    <div class="upload-container glass-card">
-                        <h2>Upload Dataset</h2>
-                        <p>Upload a CSV or Excel file to begin profiling and generating synthetic data.</p>
+                    <div class="glass-card upload-hero">
+                        <div class="hero-header">
+                            <h2>Tabular Data Ingestion</h2>
+                            <p>Upload your CSV or Excel dataset. Sankalan automatically cleans missing values, classifies features into generative roles, scales numeric variables, and prepares training tensors for the Variational Autoencoder.</p>
+                        </div>
                         
                         <div class="drop-zone" id="drop-zone">
-                            <i class="fa-solid fa-file-csv upload-icon"></i>
-                            <h3>Drag & Drop your file here</h3>
-                            <p>or</p>
+                            <div class="upload-icon-wrapper">
+                                <i class="fa-solid fa-file-arrow-up upload-icon"></i>
+                            </div>
+                            <h3>Drag & drop your dataset here</h3>
+                            <p class="drop-hint">Supported formats: <strong>.csv</strong>, <strong>.xlsx</strong></p>
                             <input type="file" id="file-input" accept=".csv, .xlsx" hidden>
-                            <button class="btn btn-primary" onclick="document.getElementById('file-input').click()">Browse Files</button>
+                            <button class="btn btn-primary" onclick="document.getElementById('file-input').click()">
+                                <i class="fa-solid fa-folder-open"></i> Browse Files
+                            </button>
                         </div>
                         
                         <div id="upload-status" class="status-message hidden">
                             <div class="loader"></div>
-                            <span id="upload-text">Uploading and profiling...</span>
+                            <span id="upload-text">Profiling dataset and building feature maps...</span>
+                        </div>
+
+                        <div class="demo-dataset-banner" id="demo-banner">
+                            <div class="demo-info">
+                                <i class="fa-solid fa-database"></i>
+                                <div>
+                                    <strong>Ready-to-use Demonstration Dataset Detected:</strong>
+                                    <span>Telco Customer Churn (7,043 rows, 21 mixed features)</span>
+                                </div>
+                            </div>
+                            <button class="btn btn-secondary btn-sm" id="btn-use-demo">
+                                <i class="fa-solid fa-bolt"></i> Inspect Preloaded Data
+                            </button>
                         </div>
                     </div>
                 </section>
 
-                <!-- Tab: Overview -->
+                <!-- ================= TAB 2: DATASET OVERVIEW ================= -->
                 <section id="tab-overview" class="tab-pane fade-in">
                     <div class="glass-card">
-                        <h2>Dataset Overview</h2>
-                        <div class="stats-grid" id="overview-stats">
-                            <!-- Stats injected via JS -->
+                        <div class="section-title-row">
+                            <div>
+                                <h2>Dataset Profiling & Schema Architecture</h2>
+                                <p>Automated summary statistics, role classification, and preprocessing breakdown.</p>
+                            </div>
+                            <div class="meta-pills" id="overview-meta-pills"></div>
                         </div>
-                        <div class="table-container" id="overview-table">
-                            <!-- Table injected via JS -->
-                            <p class="placeholder-text">Please upload a dataset first.</p>
+
+                        <div class="kpi-grid" id="overview-kpis">
+                            <div class="kpi-card">
+                                <div class="kpi-label">Total Records</div>
+                                <div class="kpi-value" id="kpi-rows">--</div>
+                                <div class="kpi-sub">Cleaned unique rows</div>
+                            </div>
+                            <div class="kpi-card">
+                                <div class="kpi-label">Features</div>
+                                <div class="kpi-value" id="kpi-cols">--</div>
+                                <div class="kpi-sub">Total columns profiled</div>
+                            </div>
+                            <div class="kpi-card">
+                                <div class="kpi-label">Missing Imputed</div>
+                                <div class="kpi-value" id="kpi-missing">--</div>
+                                <div class="kpi-sub">Median & Mode handled</div>
+                            </div>
+                            <div class="kpi-card">
+                                <div class="kpi-label">VAE Input Dimension</div>
+                                <div class="kpi-value" id="kpi-vae-dim">--</div>
+                                <div class="kpi-sub">Encoded tensor width</div>
+                            </div>
+                        </div>
+
+                        <div class="table-container" id="overview-table-container">
+                            <div class="table-header-row">
+                                <h3>Column Role Breakdown</h3>
+                                <input type="text" id="column-search-input" placeholder="Search column..." class="input-search">
+                            </div>
+                            <div class="responsive-table-wrapper">
+                                <table class="custom-table" id="columns-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Column Name</th>
+                                            <th>Detected Type</th>
+                                            <th>Assigned Role</th>
+                                            <th>Unique Values</th>
+                                            <th>Missing Values</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="columns-table-body">
+                                        <tr><td colspan="5" class="table-empty">Please upload or load a dataset first.</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </section>
 
-                <!-- Tab: EDA -->
+                <!-- ================= TAB 3: EDA ================= -->
                 <section id="tab-eda" class="tab-pane fade-in">
                     <div class="glass-card">
-                        <h2>Exploratory Data Analysis</h2>
-                        <div class="charts-grid">
-                            <div class="chart-card" id="chart-distribution"></div>
-                            <div class="chart-card" id="chart-correlation"></div>
+                        <div class="section-title-row">
+                            <div>
+                                <h2>Exploratory Data Analysis (EDA)</h2>
+                                <p>Analyze empirical distributions, statistical dispersion, and multi-variable correlations.</p>
+                            </div>
+                        </div>
+
+                        <!-- EDA Controls -->
+                        <div class="filter-strip">
+                            <div class="filter-item">
+                                <label for="eda-num-select"><i class="fa-solid fa-chart-line"></i> Numerical Feature:</label>
+                                <select id="eda-num-select" class="custom-select"></select>
+                            </div>
+                            <div class="filter-item">
+                                <label for="eda-cat-select"><i class="fa-solid fa-chart-pie"></i> Categorical Feature:</label>
+                                <select id="eda-cat-select" class="custom-select"></select>
+                            </div>
+                        </div>
+
+                        <div class="charts-grid-2col">
+                            <div class="chart-card">
+                                <div class="chart-card-header">
+                                    <h4 id="eda-dist-title">Numerical Distribution</h4>
+                                    <div class="chart-tag" id="eda-dist-tag">Histogram + KDE</div>
+                                </div>
+                                <div class="chart-plot" id="chart-eda-distribution"></div>
+                            </div>
+                            <div class="chart-card">
+                                <div class="chart-card-header">
+                                    <h4 id="eda-cat-title">Category Frequencies</h4>
+                                    <div class="chart-tag" id="eda-cat-tag">Discrete Counts</div>
+                                </div>
+                                <div class="chart-plot" id="chart-eda-category"></div>
+                            </div>
+                        </div>
+
+                        <div class="chart-card wide-chart-card">
+                            <div class="chart-card-header">
+                                <h4>Full Feature Correlation Matrix</h4>
+                                <div class="chart-tag">Pearson Coefficient (r)</div>
+                            </div>
+                            <div class="chart-plot" id="chart-eda-correlation"></div>
                         </div>
                     </div>
                 </section>
 
-                <!-- Tab: Generate -->
+                <!-- ================= TAB 4: GENERATE ================= -->
                 <section id="tab-generate" class="tab-pane fade-in">
                     <div class="glass-card">
-                        <h2>Train VAE & Generate Data</h2>
-                        <div class="generation-controls">
-                            <div class="control-group">
-                                <label for="num-records">Number of Synthetic Records</label>
-                                <input type="number" id="num-records" value="5000" min="100">
+                        <div class="section-title-row">
+                            <div>
+                                <h2>Train Variational Autoencoder & Synthesize</h2>
+                                <p>Tune latent hyperparameters, train the encoder-decoder network, and generate synthetic rows.</p>
                             </div>
-                            <div class="control-group">
-                                <label for="epochs">Training Epochs</label>
-                                <input type="number" id="epochs" value="50" min="10" max="500">
-                            </div>
-                            <button class="btn btn-primary btn-large" id="btn-generate">
-                                <i class="fa-solid fa-wand-magic-sparkles"></i> Generate Data
-                            </button>
                         </div>
-                        <div id="generation-progress" class="hidden">
-                            <div class="progress-bar-container">
-                                <div class="progress-bar" id="gen-progress-bar"></div>
+
+                        <div class="generation-panel">
+                            <div class="generation-controls">
+                                <div class="control-group">
+                                    <label for="num-records">Records to Generate</label>
+                                    <input type="number" id="num-records" value="5000" min="50" max="100000" step="500">
+                                    <span class="control-hint">Synthetic output sample size</span>
+                                </div>
+                                <div class="control-group">
+                                    <label for="epochs">Training Epochs</label>
+                                    <input type="number" id="epochs" value="40" min="5" max="300" step="5">
+                                    <span class="control-hint">Iterative optimization passes</span>
+                                </div>
+                                <div class="control-group">
+                                    <label for="latent-dim">Latent Dimension (z)</label>
+                                    <input type="number" id="latent-dim" value="8" min="2" max="64" step="2">
+                                    <span class="control-hint">Bottleneck representation size</span>
+                                </div>
+                                <div class="control-action">
+                                    <button class="btn btn-primary btn-large" id="btn-generate">
+                                        <i class="fa-solid fa-wand-magic-sparkles"></i> Train VAE & Generate
+                                    </button>
+                                </div>
                             </div>
-                            <p id="gen-status-text">Training VAE model...</p>
+
+                            <div id="generation-progress" class="progress-box hidden">
+                                <div class="progress-header">
+                                    <span id="gen-status-text">Training VAE neural network...</span>
+                                    <span id="gen-pct-text">0%</span>
+                                </div>
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar" id="gen-progress-bar"></div>
+                                </div>
+                                <p class="progress-note"><i class="fa-solid fa-info-circle"></i> Optimizing combined Reconstruction Loss (MSE + Categorical Cross-Entropy) and KL Divergence with beta-annealing.</p>
+                            </div>
+                        </div>
+
+                        <!-- Training History Convergence Curve -->
+                        <div class="chart-card wide-chart-card" id="training-loss-card" style="margin-top: 2rem;">
+                            <div class="chart-card-header">
+                                <h4>VAE Training Convergence History</h4>
+                                <div class="chart-tag">Total Loss • Reconstruction Loss • KL Loss</div>
+                            </div>
+                            <div class="chart-plot" id="chart-training-loss">
+                                <div class="chart-placeholder">
+                                    <i class="fa-solid fa-chart-line"></i>
+                                    <p>Run training to view convergence history and loss curves.</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </section>
 
-                <!-- Tab: Compare -->
+                <!-- ================= TAB 5: COMPARE ================= -->
                 <section id="tab-compare" class="tab-pane fade-in">
                     <div class="glass-card">
-                        <h2>Real vs Synthetic Comparison</h2>
-                        <div class="comparison-grid">
-                            <div class="chart-card" id="compare-dist-real"></div>
-                            <div class="chart-card" id="compare-dist-synth"></div>
+                        <div class="section-title-row">
+                            <div>
+                                <h2>Real vs Synthetic Distribution Comparison</h2>
+                                <p>Side-by-side empirical validation verifying preservation of multi-variable relationships and distributions.</p>
+                            </div>
+                        </div>
+
+                        <!-- Comparison Filter -->
+                        <div class="filter-strip">
+                            <div class="filter-item">
+                                <label for="compare-num-select"><i class="fa-solid fa-sliders"></i> Compare Numerical Feature:</label>
+                                <select id="compare-num-select" class="custom-select"></select>
+                            </div>
+                            <div class="filter-item">
+                                <label for="compare-cat-select"><i class="fa-solid fa-tags"></i> Compare Categorical Feature:</label>
+                                <select id="compare-cat-select" class="custom-select"></select>
+                            </div>
+                        </div>
+
+                        <!-- Distribution Comparison Plots -->
+                        <div class="charts-grid-2col">
+                            <div class="chart-card">
+                                <div class="chart-card-header">
+                                    <h4 id="compare-num-title">Numerical Distribution Alignment</h4>
+                                    <div class="chart-tag">Real (Blue) vs Synthetic (Purple)</div>
+                                </div>
+                                <div class="chart-plot" id="chart-compare-numeric"></div>
+                            </div>
+                            <div class="chart-card">
+                                <div class="chart-card-header">
+                                    <h4 id="compare-cat-title">Categorical Proportion Alignment</h4>
+                                    <div class="chart-tag">Grouped Class Share (%)</div>
+                                </div>
+                                <div class="chart-plot" id="chart-compare-categorical"></div>
+                            </div>
+                        </div>
+
+                        <!-- Side-by-side Numerical Stats Card -->
+                        <div class="stats-comparison-container" id="num-stats-comparison-box">
+                            <!-- Injected via JS -->
+                        </div>
+
+                        <!-- Correlation Matrices Comparison -->
+                        <div class="charts-grid-2col" style="margin-top: 2rem;">
+                            <div class="chart-card">
+                                <div class="chart-card-header">
+                                    <h4>Real Data Correlation</h4>
+                                    <div class="chart-tag">Original Matrix</div>
+                                </div>
+                                <div class="chart-plot" id="chart-compare-corr-real"></div>
+                            </div>
+                            <div class="chart-card">
+                                <div class="chart-card-header">
+                                    <h4>Synthetic Data Correlation</h4>
+                                    <div class="chart-tag">VAE Preserved Matrix</div>
+                                </div>
+                                <div class="chart-plot" id="chart-compare-corr-synth"></div>
+                            </div>
                         </div>
                     </div>
                 </section>
 
-                <!-- Tab: Report -->
+                <!-- ================= TAB 6: QUALITY REPORT ================= -->
                 <section id="tab-report" class="tab-pane fade-in">
                     <div class="glass-card">
-                        <h2>Quality Report</h2>
-                        <div class="score-card">
-                            <h3>Overall Quality Score</h3>
-                            <div class="score-circle" id="quality-score">--</div>
+                        <div class="section-title-row">
+                            <div>
+                                <h2>Synthetic Data Quality & Fidelity Benchmark</h2>
+                                <p>Comprehensive statistical evaluation score synthesized from distribution, correlation, categorical, and privacy metrics.</p>
+                            </div>
                         </div>
-                        <div class="download-section">
-                            <button class="btn btn-success" id="btn-download-csv">
-                                <i class="fa-solid fa-download"></i> Download Synthetic Data (CSV)
-                            </button>
+
+                        <!-- Score Banner -->
+                        <div class="score-hero">
+                            <div class="score-circle-wrapper">
+                                <div class="score-circle" id="quality-score">--</div>
+                                <span class="score-label">Overall Quality Score</span>
+                            </div>
+                            <div class="score-hero-details">
+                                <div class="score-badge-status" id="score-status-badge">
+                                    <i class="fa-solid fa-circle-check"></i> Model Evaluation Pending
+                                </div>
+                                <p id="score-summary-text">Generate synthetic data using the VAE model to unlock the full fidelity benchmark report.</p>
+                                
+                                <div class="download-action-group">
+                                    <button class="btn btn-success" id="btn-download-csv" disabled>
+                                        <i class="fa-solid fa-file-csv"></i> Download Synthetic Dataset (CSV)
+                                    </button>
+                                    <button class="btn btn-secondary" id="btn-download-report" disabled>
+                                        <i class="fa-solid fa-file-code"></i> Download Evaluation Report (JSON)
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Metric Breakdown Cards -->
+                        <div class="metric-cards-grid" id="report-metric-cards">
+                            <div class="metric-card">
+                                <div class="metric-icon"><i class="fa-solid fa-chart-line"></i></div>
+                                <div class="metric-name">Statistical Similarity</div>
+                                <div class="metric-score" id="stat-score-val">--</div>
+                                <div class="metric-desc">Z-difference of Means & Standard Deviations</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-icon"><i class="fa-solid fa-wave-square"></i></div>
+                                <div class="metric-name">Distribution Alignment</div>
+                                <div class="metric-score" id="dist-score-val">--</div>
+                                <div class="metric-desc">Normalized Wasserstein Distance score</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-icon"><i class="fa-solid fa-diagram-project"></i></div>
+                                <div class="metric-name">Correlation Preservation</div>
+                                <div class="metric-score" id="corr-score-val">--</div>
+                                <div class="metric-desc">Mean Absolute Error across Correlation pairs</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-icon"><i class="fa-solid fa-chart-pie"></i></div>
+                                <div class="metric-name">Categorical Fidelity</div>
+                                <div class="metric-score" id="cat-score-val">--</div>
+                                <div class="metric-desc">Total Variation Distance on discrete classes</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-icon"><i class="fa-solid fa-user-shield"></i></div>
+                                <div class="metric-name">Privacy & Novelty</div>
+                                <div class="metric-score" id="privacy-score-val">--</div>
+                                <div class="metric-desc">Exact duplicate check & memorization penalty</div>
+                            </div>
+                        </div>
+
+                        <!-- Downstream Utility Card (Spec Section 16) -->
+                        <div class="utility-card" id="utility-card" style="margin-top: 2rem;">
+                            <div class="utility-header">
+                                <div>
+                                    <h4><i class="fa-solid fa-robot"></i> Downstream Machine Learning Utility Benchmark</h4>
+                                    <p class="utility-sub">Tests whether a model trained on synthetic data performs accurately on held-out real data (TSTR vs TRTR).</p>
+                                </div>
+                                <span class="utility-badge" id="utility-badge">--</span>
+                            </div>
+                            <div class="utility-body" id="utility-body">
+                                <p class="placeholder-text">Awaiting model synthesis to compute predictive utility retention.</p>
+                            </div>
+                        </div>
+
+                        <!-- Column-by-Column Benchmarking Table -->
+                        <div class="table-container" style="margin-top: 2rem;">
+                            <div class="table-header-row">
+                                <h3>Feature-Level Fidelity Breakdown</h3>
+                            </div>
+                            <div class="responsive-table-wrapper">
+                                <table class="custom-table" id="report-columns-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Feature</th>
+                                            <th>Real Mean</th>
+                                            <th>Synthetic Mean</th>
+                                            <th>Real Std</th>
+                                            <th>Synthetic Std</th>
+                                            <th>Wasserstein Dist</th>
+                                            <th>Quality Score</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="report-columns-table-body">
+                                        <tr><td colspan="7" class="table-empty">No synthetic records evaluated yet.</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </section>
             </div>
         </main>
     </div>
+
+    <!-- Main Logic Script -->
     <script src="js/script.js"></script>
 </body>
 </html>
