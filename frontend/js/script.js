@@ -8,7 +8,9 @@ document.addEventListener('DOMContentLoaded', () => {
         qualityReport: null,
         trainingHistory: null,
         synthDownloadUrl: '/api/download',
-        reportDownloadUrl: '/api/download/report'
+        reportDownloadUrl: '/api/download/report',
+        progressPollTimer: null,
+        activeTheaterChartId: null
     };
 
     // Tab Titles & Descriptions
@@ -27,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         'tab-generate': {
             title: 'Train Variational Autoencoder & Synthesize',
-            desc: 'Tune latent hyperparameters, train the encoder-decoder network, and generate synthetic rows'
+            desc: 'Tune latent hyperparameters, train the neural network with live progress, and generate synthetic rows'
         },
         'tab-compare': {
             title: 'Real vs Synthetic Distribution Comparison',
@@ -39,14 +41,166 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Plotly Default Theme
+    // Plotly Base Layout with High Contrast and Auto Margins (No Cutoff)
     const plotlyLayoutBase = {
         paper_bgcolor: 'transparent',
         plot_bgcolor: 'transparent',
-        font: { color: '#0f172a', family: 'Plus Jakarta Sans, sans-serif' },
-        margin: { t: 40, b: 40, l: 50, r: 30 },
-        autosize: true
+        font: { color: '#0f172a', family: 'Plus Jakarta Sans, sans-serif', size: 12 },
+        margin: { t: 45, b: 70, l: 110, r: 40, automargin: true },
+        autosize: true,
+        xaxis: { 
+            automargin: true, 
+            tickfont: { size: 12, color: '#334155', weight: 600 },
+            titlefont: { size: 13, color: '#0f172a', weight: 700 }
+        },
+        yaxis: { 
+            automargin: true, 
+            tickfont: { size: 12, color: '#334155', weight: 600 },
+            titlefont: { size: 13, color: '#0f172a', weight: 700 }
+        }
     };
+
+    const plotlyConfig = {
+        responsive: true,
+        displayModeBar: true,
+        modeBarButtonsToRemove: ['lasso2d', 'select2d'],
+        displaylogo: false
+    };
+
+    // -------------------------------------------------------------
+    // Global Zoom & Theater Mode Handlers (Accessible from HTML)
+    // -------------------------------------------------------------
+    window.zoomChart = function(chartId, factor) {
+        const el = document.getElementById(chartId);
+        if (!el || !el.layout) return;
+
+        const update = {};
+        const xRange = el.layout.xaxis ? el.layout.xaxis.range : null;
+        const yRange = el.layout.yaxis ? el.layout.yaxis.range : null;
+
+        if (xRange && xRange.length === 2 && typeof xRange[0] === 'number') {
+            const mid = (xRange[0] + xRange[1]) / 2;
+            const span = (xRange[1] - xRange[0]) * factor / 2;
+            update['xaxis.range'] = [mid - span, mid + span];
+            update['xaxis.autorange'] = false;
+        }
+
+        if (yRange && yRange.length === 2 && typeof yRange[0] === 'number') {
+            const mid = (yRange[0] + yRange[1]) / 2;
+            const span = (yRange[1] - yRange[0]) * factor / 2;
+            update['yaxis.range'] = [mid - span, mid + span];
+            update['yaxis.autorange'] = false;
+        }
+
+        if (Object.keys(update).length > 0) {
+            Plotly.relayout(el, update);
+        }
+    };
+
+    window.resetChart = function(chartId) {
+        const el = document.getElementById(chartId);
+        if (!el) return;
+        Plotly.relayout(el, { 'xaxis.autorange': true, 'yaxis.autorange': true });
+    };
+
+    window.openTheater = function(sourceChartId, title) {
+        const sourceEl = document.getElementById(sourceChartId);
+        if (!sourceEl || !sourceEl.data) {
+            alert('Chart is still loading or has not been rendered yet.');
+            return;
+        }
+
+        AppState.activeTheaterChartId = sourceChartId;
+        const modal = document.getElementById('theater-modal');
+        modal.classList.remove('hidden');
+
+        document.getElementById('theater-title').textContent = title || 'Expanded Visualization';
+
+        // Deep copy data & layout for larger theater display
+        const theaterData = JSON.parse(JSON.stringify(sourceEl.data));
+        const theaterLayout = JSON.parse(JSON.stringify(sourceEl.layout || plotlyLayoutBase));
+
+        // Enlarge fonts and spacing for theater view
+        theaterLayout.font = { ...theaterLayout.font, size: 14 };
+        theaterLayout.margin = { t: 50, b: 80, l: 120, r: 50, automargin: true };
+        if (theaterLayout.xaxis) theaterLayout.xaxis.tickfont = { size: 13, color: '#1e293b' };
+        if (theaterLayout.yaxis) theaterLayout.yaxis.tickfont = { size: 13, color: '#1e293b' };
+
+        Plotly.newPlot('theater-plot', theaterData, theaterLayout, plotlyConfig).then(() => {
+            Plotly.Plots.resize(document.getElementById('theater-plot'));
+        });
+
+        // Populate theater sidebar stats
+        populateTheaterSidebar(sourceChartId);
+    };
+
+    window.closeTheater = function() {
+        const modal = document.getElementById('theater-modal');
+        modal.classList.add('hidden');
+        AppState.activeTheaterChartId = null;
+    };
+
+    window.zoomTheater = function(factor) {
+        window.zoomChart('theater-plot', factor);
+    };
+
+    window.resetTheater = function() {
+        window.resetChart('theater-plot');
+    };
+
+    // Close on Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            window.closeTheater();
+        }
+    });
+
+    function populateTheaterSidebar(sourceChartId) {
+        const metricsContainer = document.getElementById('theater-metrics-content');
+        const infoText = document.getElementById('theater-info-text');
+        metricsContainer.innerHTML = '';
+
+        if (sourceChartId === 'chart-eda-distribution' && AppState.edaData) {
+            const col = document.getElementById('eda-num-select').value;
+            const dist = AppState.edaData.column_distributions[col];
+            infoText.textContent = `Analyzing numerical dispersion and skewness for "${col}". Density reveals distribution spread.`;
+            if (dist) {
+                metricsContainer.innerHTML = `
+                    <div class="theater-metric-row"><span>Feature</span><strong>${col}</strong></div>
+                    <div class="theater-metric-row"><span>Mean</span><strong>${dist.mean}</strong></div>
+                    <div class="theater-metric-row"><span>Median</span><strong>${dist.median}</strong></div>
+                    <div class="theater-metric-row"><span>Std Dev</span><strong>${dist.std}</strong></div>
+                    <div class="theater-metric-row"><span>Min / Max</span><strong>${dist.min} / ${dist.max}</strong></div>
+                `;
+            }
+        } else if (sourceChartId === 'chart-compare-numeric' && AppState.comparisonData) {
+            const num = AppState.comparisonData.num_distribution;
+            infoText.textContent = `Overlaid empirical comparison between Real (Blue) and VAE Synthetic (Purple) samples for "${num ? num.column : ''}".`;
+            if (num) {
+                metricsContainer.innerHTML = `
+                    <div class="theater-metric-row"><span>Real Mean</span><strong style="color:#4f46e5">${num.real_stats.mean}</strong></div>
+                    <div class="theater-metric-row"><span>Synth Mean</span><strong style="color:#7c3aed">${num.synth_stats.mean}</strong></div>
+                    <div class="theater-metric-row"><span>Real Std</span><strong style="color:#4f46e5">${num.real_stats.std}</strong></div>
+                    <div class="theater-metric-row"><span>Synth Std</span><strong style="color:#7c3aed">${num.synth_stats.std}</strong></div>
+                `;
+            }
+        } else if (sourceChartId === 'chart-training-loss' && AppState.trainingHistory) {
+            const h = AppState.trainingHistory;
+            const epochs = h.total_loss.length;
+            const finalTotal = h.total_loss[epochs - 1];
+            const finalRecon = h.recon_loss[epochs - 1];
+            const finalKL = h.kl_loss[epochs - 1];
+            infoText.textContent = 'Demonstrates Variational Autoencoder optimization over training epochs. Total Loss combines Reconstruction Error and Latent Regularization.';
+            metricsContainer.innerHTML = `
+                <div class="theater-metric-row"><span>Epochs Run</span><strong>${epochs}</strong></div>
+                <div class="theater-metric-row"><span>Final Total Loss</span><strong style="color:#4f46e5">${finalTotal.toFixed(3)}</strong></div>
+                <div class="theater-metric-row"><span>Reconstruction Loss</span><strong style="color:#059669">${finalRecon.toFixed(3)}</strong></div>
+                <div class="theater-metric-row"><span>KL Divergence</span><strong style="color:#d97706">${finalKL.toFixed(3)}</strong></div>
+            `;
+        } else {
+            infoText.textContent = 'Expanded interactive view. Use the toolbar at the top right to zoom, pan, or download high-resolution PNG.';
+        }
+    }
 
     // -------------------------------------------------------------
     // Tab Navigation
@@ -78,12 +232,19 @@ document.addEventListener('DOMContentLoaded', () => {
             pageDesc.textContent = tabMeta[targetTab].desc;
         }
 
-        // Lazy load charts when relevant tab is selected
+        // Trigger chart rendering & resizing on tab switch
         if (targetTab === 'tab-eda' && !AppState.edaData) {
             loadEDAData();
         } else if (targetTab === 'tab-compare') {
             loadComparisonData();
         }
+
+        // Force Plotly resize to fit active tab
+        setTimeout(() => {
+            document.querySelectorAll('.chart-plot').forEach(el => {
+                if (el.data) Plotly.Plots.resize(el);
+            });
+        }, 150);
     }
 
     // -------------------------------------------------------------
@@ -99,7 +260,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (status.dataset_loaded) {
                     sysStatus.textContent = `Dataset Ready: ${status.raw_filename}`;
                     document.getElementById('demo-banner').style.display = 'flex';
-                    // Auto-fetch EDA if data is ready
                     loadEDAData(false);
                 }
                 if (status.synthetic_ready) {
@@ -113,7 +273,6 @@ document.addEventListener('DOMContentLoaded', () => {
             .catch(err => console.log('Status check error:', err));
     }
 
-    // Demo dataset button handler
     document.getElementById('btn-use-demo').addEventListener('click', () => {
         loadEDAData(true);
         switchTab('tab-overview');
@@ -176,7 +335,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data.profile) {
                 AppState.currentProfile = data.profile;
                 AppState.currentPreprocessing = data.preprocessing;
-                AppState.edaData = null; // force reload EDA
+                AppState.edaData = null;
 
                 uploadText.textContent = 'Preprocessing complete! Redirecting to Overview...';
                 document.getElementById('system-status').textContent = `Dataset: ${data.filename}`;
@@ -229,7 +388,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             tr.innerHTML = `
-                <td style="font-weight: 600;">${col.name}</td>
+                <td style="font-weight: 700;">${col.name}</td>
                 <td>${col.type} <span style="color: var(--text-muted); font-size: 0.8rem;">(${col.dtype})</span></td>
                 <td>${roleBadge}</td>
                 <td style="font-family: 'JetBrains Mono';">${col.unique_count.toLocaleString()}</td>
@@ -241,7 +400,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Search filter for columns table
     const searchInput = document.getElementById('column-search-input');
     if (searchInput) {
         searchInput.addEventListener('input', (e) => {
@@ -266,7 +424,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     populateEDASelectors(data);
                     renderEDACorrelation(data.correlation);
 
-                    // Build overview if not yet loaded
                     if (!AppState.currentProfile && data.column_distributions) {
                         const numCols = Object.keys(data.column_distributions);
                         document.getElementById('kpi-rows').textContent = '~7,043';
@@ -322,7 +479,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!dist) return;
 
         document.getElementById('eda-dist-title').textContent = `Distribution of ${colName}`;
-        document.getElementById('eda-dist-tag').textContent = `Mean: ${dist.mean} | Std: ${dist.std}`;
+        document.getElementById('eda-dist-tag').textContent = `Mean: ${dist.mean} • Std: ${dist.std}`;
 
         const trace = {
             x: dist.values,
@@ -332,17 +489,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 color: '#4f46e5',
                 line: { color: '#3730a3', width: 1 }
             },
-            opacity: 0.75
+            opacity: 0.8
         };
 
         const layout = {
             ...plotlyLayoutBase,
-            xaxis: { title: colName, gridcolor: '#e2e8f0' },
-            yaxis: { title: 'Frequency', gridcolor: '#e2e8f0' },
+            xaxis: { ...plotlyLayoutBase.xaxis, title: colName, gridcolor: '#e2e8f0' },
+            yaxis: { ...plotlyLayoutBase.yaxis, title: 'Record Count', gridcolor: '#e2e8f0' },
             bargap: 0.05
         };
 
-        Plotly.newPlot('chart-eda-distribution', [trace], layout, { responsive: true, displayModeBar: false });
+        Plotly.newPlot('chart-eda-distribution', [trace], layout, plotlyConfig);
     }
 
     function renderEDACategorical(colName) {
@@ -363,11 +520,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const layout = {
             ...plotlyLayoutBase,
-            xaxis: { title: 'Classes', tickangle: -25 },
-            yaxis: { title: 'Count', gridcolor: '#e2e8f0' }
+            xaxis: { ...plotlyLayoutBase.xaxis, title: colName, tickangle: -20, gridcolor: '#e2e8f0' },
+            yaxis: { ...plotlyLayoutBase.yaxis, title: 'Count', gridcolor: '#e2e8f0' }
         };
 
-        Plotly.newPlot('chart-eda-category', [trace], layout, { responsive: true, displayModeBar: false });
+        Plotly.newPlot('chart-eda-category', [trace], layout, plotlyConfig);
     }
 
     function renderEDACorrelation(corr) {
@@ -378,77 +535,78 @@ document.addEventListener('DOMContentLoaded', () => {
             x: corr.x,
             y: corr.y,
             type: 'heatmap',
-            colorscale: 'Viridis',
-            colorbar: { title: 'Pearson r' }
+            colorscale: 'Blues',
+            colorbar: { title: 'Pearson r' },
+            zmin: -1,
+            zmax: 1
         };
 
         const layout = {
             ...plotlyLayoutBase,
-            margin: { t: 40, b: 70, l: 80, r: 40 }
+            margin: { t: 40, b: 90, l: 140, r: 40, automargin: true }
         };
 
-        Plotly.newPlot('chart-eda-correlation', [trace], layout, { responsive: true, displayModeBar: false });
+        Plotly.newPlot('chart-eda-correlation', [trace], layout, plotlyConfig);
     }
 
     // -------------------------------------------------------------
-    // Tab 4: VAE Training & Synthesis
+    // Tab 4: VAE Training with Live Continuous Progress & Stop Support
     // -------------------------------------------------------------
     const btnGenerate = document.getElementById('btn-generate');
+    const btnStopTraining = document.getElementById('btn-stop-training');
     const genProgress = document.getElementById('generation-progress');
     const genProgressBar = document.getElementById('gen-progress-bar');
     const genStatusText = document.getElementById('gen-status-text');
     const genPctText = document.getElementById('gen-pct-text');
+    const genLiveMetrics = document.getElementById('gen-live-metrics');
 
     btnGenerate.addEventListener('click', () => {
         const numRecords = parseInt(document.getElementById('num-records').value) || 5000;
         const epochs = parseInt(document.getElementById('epochs').value) || 40;
         const latentDim = parseInt(document.getElementById('latent-dim').value) || 8;
 
-        btnGenerate.disabled = true;
+        // UI state: training active
+        btnGenerate.classList.add('hidden');
+        btnStopTraining.classList.remove('hidden');
         genProgress.classList.remove('hidden');
-        genProgressBar.style.width = '15%';
-        genPctText.textContent = '15%';
-        genStatusText.textContent = `Training VAE (${epochs} epochs, latent dim=${latentDim})...`;
 
-        // Simulate step progress while waiting
-        let progress = 15;
-        const progressTimer = setInterval(() => {
-            if (progress < 85) {
-                progress += Math.floor(Math.random() * 8) + 2;
-                genProgressBar.style.width = `${progress}%`;
-                genPctText.textContent = `${progress}%`;
-            }
-        }, 800);
+        genProgressBar.style.width = '5%';
+        genProgressBar.style.background = 'linear-gradient(90deg, var(--accent-color), var(--purple-accent), #38bdf8)';
+        genPctText.textContent = '5%';
+        genStatusText.textContent = `Initializing training for ${epochs} epochs...`;
+        genLiveMetrics.innerHTML = '<span><i class="fa-solid fa-spinner fa-spin"></i> Initializing model tensors...</span>';
+
+        // Start live continuous progress polling from backend
+        startProgressPolling();
 
         fetch(`/api/generate?num_records=${numRecords}&epochs=${epochs}&latent_dim=${latentDim}`, {
             method: 'POST'
         })
         .then(res => res.json())
         .then(data => {
-            clearInterval(progressTimer);
+            stopProgressPolling();
+            btnGenerate.classList.remove('hidden');
+            btnStopTraining.classList.add('hidden');
+
             if (data.quality_report) {
                 genProgressBar.style.width = '100%';
                 genPctText.textContent = '100%';
                 genStatusText.textContent = 'Training & Synthesis complete!';
+                genLiveMetrics.innerHTML = '<span style="color: var(--success-color);"><i class="fa-solid fa-check-circle"></i> VAE successfully generated synthetic dataset!</span>';
 
                 AppState.qualityReport = data.quality_report;
                 AppState.trainingHistory = data.training_history;
 
-                // Render loss curve
                 if (data.training_history) {
                     renderTrainingLossCurve(data.training_history);
                 }
 
-                // Populate Quality Report
                 renderQualityReport(data.quality_report);
 
-                // Enable download buttons
                 document.getElementById('btn-download-csv').disabled = false;
                 document.getElementById('btn-download-report').disabled = false;
 
-                // Auto switch to comparison tab
                 setTimeout(() => {
-                    btnGenerate.disabled = false;
                     switchTab('tab-compare');
                 }, 1200);
             } else {
@@ -456,13 +614,57 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         })
         .catch(err => {
-            clearInterval(progressTimer);
-            btnGenerate.disabled = false;
+            stopProgressPolling();
+            btnGenerate.classList.remove('hidden');
+            btnStopTraining.classList.add('hidden');
             genStatusText.textContent = `Error: ${err.message}`;
             genStatusText.style.color = '#dc2626';
+            genProgressBar.style.background = '#dc2626';
+            genLiveMetrics.innerHTML = `<span style="color: #dc2626;"><i class="fa-solid fa-circle-exclamation"></i> Training stopped due to error.</span>`;
             console.error('Generation Error:', err);
         });
     });
+
+    btnStopTraining.addEventListener('click', () => {
+        btnStopTraining.disabled = true;
+        genStatusText.textContent = 'Halting training... Finishing current epoch...';
+        fetch('/api/train/stop', { method: 'POST' })
+            .then(res => res.json())
+            .then(res => {
+                console.log('Stop signal sent:', res);
+            })
+            .catch(err => console.error('Stop error:', err));
+    });
+
+    function startProgressPolling() {
+        if (AppState.progressPollTimer) clearInterval(AppState.progressPollTimer);
+        AppState.progressPollTimer = setInterval(() => {
+            fetch('/api/train/status')
+                .then(res => res.json())
+                .then(state => {
+                    if (state.is_training) {
+                        const pct = Math.max(5, state.percent);
+                        genProgressBar.style.width = `${pct}%`;
+                        genPctText.textContent = `${pct}%`;
+                        genStatusText.textContent = state.message;
+                        genLiveMetrics.innerHTML = `
+                            <span><strong>Epoch:</strong> ${state.current_epoch}/${state.total_epochs}</span>
+                            <span><strong>Loss:</strong> ${state.loss}</span>
+                            <span><strong>Recon:</strong> ${state.recon_loss}</span>
+                            <span><strong>KL:</strong> ${state.kl_loss}</span>
+                        `;
+                    }
+                })
+                .catch(() => {});
+        }, 400);
+    }
+
+    function stopProgressPolling() {
+        if (AppState.progressPollTimer) {
+            clearInterval(AppState.progressPollTimer);
+            AppState.progressPollTimer = null;
+        }
+    }
 
     function renderTrainingLossCurve(history) {
         const epochs = Array.from({ length: history.total_loss.length }, (_, i) => i + 1);
@@ -480,25 +682,25 @@ document.addEventListener('DOMContentLoaded', () => {
             y: history.recon_loss,
             mode: 'lines',
             name: 'Reconstruction Loss',
-            line: { color: '#059669', width: 2, dash: 'solid' }
+            line: { color: '#059669', width: 2 }
         };
 
         const traceKL = {
             x: epochs,
             y: history.kl_loss,
             mode: 'lines',
-            name: 'KL Divergence (Latent Regularization)',
+            name: 'KL Divergence (Regularization)',
             line: { color: '#d97706', width: 2, dash: 'dot' }
         };
 
         const layout = {
             ...plotlyLayoutBase,
-            xaxis: { title: 'Epochs', gridcolor: '#e2e8f0' },
-            yaxis: { title: 'Objective Loss', gridcolor: '#e2e8f0' },
+            xaxis: { ...plotlyLayoutBase.xaxis, title: 'Training Epochs', gridcolor: '#e2e8f0' },
+            yaxis: { ...plotlyLayoutBase.yaxis, title: 'Loss Objective', gridcolor: '#e2e8f0' },
             legend: { orientation: 'h', y: 1.15 }
         };
 
-        Plotly.newPlot('chart-training-loss', [traceTotal, traceRecon, traceKL], layout, { responsive: true });
+        Plotly.newPlot('chart-training-loss', [traceTotal, traceRecon, traceKL], layout, plotlyConfig);
     }
 
     // -------------------------------------------------------------
@@ -574,14 +776,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const layout = {
             ...plotlyLayoutBase,
             barmode: 'overlay',
-            xaxis: { title: dist.column, gridcolor: '#e2e8f0' },
-            yaxis: { title: 'Density / Count', gridcolor: '#e2e8f0' },
+            xaxis: { ...plotlyLayoutBase.xaxis, title: dist.column, gridcolor: '#e2e8f0' },
+            yaxis: { ...plotlyLayoutBase.yaxis, title: 'Sample Count', gridcolor: '#e2e8f0' },
             legend: { orientation: 'h', y: 1.15 }
         };
 
-        Plotly.newPlot('chart-compare-numeric', [traceReal, traceSynth], layout, { responsive: true, displayModeBar: false });
+        Plotly.newPlot('chart-compare-numeric', [traceReal, traceSynth], layout, plotlyConfig);
 
-        // Update side-by-side stats comparison box
         const r = dist.real_stats;
         const s = dist.synth_stats;
         const statsBox = document.getElementById('num-stats-comparison-box');
@@ -589,8 +790,8 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="stats-grid-row">
                 <div class="stats-item">
                     <div class="stats-item-title">Metric</div>
-                    <div style="font-weight: 700; color: #4f46e5; margin-top: 0.2rem;">Real</div>
-                    <div style="font-weight: 700; color: #7c3aed;">Synthetic</div>
+                    <div style="font-weight: 800; color: #4f46e5; margin-top: 0.2rem;">Real</div>
+                    <div style="font-weight: 800; color: #7c3aed;">Synthetic</div>
                 </div>
                 <div class="stats-item">
                     <div class="stats-item-title">Mean</div>
@@ -624,7 +825,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderComparisonCategorical(cat) {
         if (!cat) return;
 
-        document.getElementById('compare-cat-title').textContent = `Category Proportion Alignment: ${cat.column}`;
+        document.getElementById('compare-cat-title').textContent = `Category Proportion: ${cat.column}`;
 
         const traceReal = {
             x: cat.labels,
@@ -645,12 +846,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const layout = {
             ...plotlyLayoutBase,
             barmode: 'group',
-            xaxis: { title: 'Category', tickangle: -20 },
-            yaxis: { title: 'Proportion (%)', gridcolor: '#e2e8f0' },
+            xaxis: { ...plotlyLayoutBase.xaxis, title: cat.column, tickangle: -20, gridcolor: '#e2e8f0' },
+            yaxis: { ...plotlyLayoutBase.yaxis, title: 'Share (%)', gridcolor: '#e2e8f0' },
             legend: { orientation: 'h', y: 1.15 }
         };
 
-        Plotly.newPlot('chart-compare-categorical', [traceReal, traceSynth], layout, { responsive: true, displayModeBar: false });
+        Plotly.newPlot('chart-compare-categorical', [traceReal, traceSynth], layout, plotlyConfig);
     }
 
     function renderComparisonCorrelations(corr) {
@@ -676,8 +877,13 @@ document.addEventListener('DOMContentLoaded', () => {
             zmax: 1
         };
 
-        Plotly.newPlot('chart-compare-corr-real', [traceReal], plotlyLayoutBase, { responsive: true, displayModeBar: false });
-        Plotly.newPlot('chart-compare-corr-synth', [traceSynth], plotlyLayoutBase, { responsive: true, displayModeBar: false });
+        const corrLayout = {
+            ...plotlyLayoutBase,
+            margin: { t: 40, b: 80, l: 140, r: 40, automargin: true }
+        };
+
+        Plotly.newPlot('chart-compare-corr-real', [traceReal], corrLayout, plotlyConfig);
+        Plotly.newPlot('chart-compare-corr-synth', [traceSynth], corrLayout, plotlyConfig);
     }
 
     // -------------------------------------------------------------
@@ -686,7 +892,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderQualityReport(report) {
         if (!report) return;
 
-        // Overall Score
         const scoreElem = document.getElementById('quality-score');
         scoreElem.textContent = `${report.overall_score}%`;
         
@@ -712,14 +917,12 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('score-summary-text').textContent = 
             `Synthetic data captures ${report.statistical_similarity}% statistical similarity and ${report.distribution_similarity}% Wasserstein distribution alignment with an exact duplicate memorization rate of ${report.exact_duplicate_rate}%.`;
 
-        // Metric Breakdown Cards
         document.getElementById('stat-score-val').textContent = `${report.statistical_similarity}%`;
         document.getElementById('dist-score-val').textContent = `${report.distribution_similarity}%`;
         document.getElementById('corr-score-val').textContent = `${report.correlation_similarity}%`;
         document.getElementById('cat-score-val').textContent = `${report.categorical_similarity}%`;
         document.getElementById('privacy-score-val').textContent = `${report.privacy_score}%`;
 
-        // Downstream Utility
         const utilBadge = document.getElementById('utility-badge');
         const utilBody = document.getElementById('utility-body');
         if (report.downstream_utility) {
@@ -743,7 +946,6 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
         }
 
-        // Column Benchmarking Table
         const tbody = document.getElementById('report-columns-table-body');
         tbody.innerHTML = '';
         if (report.numeric_metrics) {
@@ -764,7 +966,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Download Button Actions
     document.getElementById('btn-download-csv').addEventListener('click', () => {
         window.location.href = AppState.synthDownloadUrl;
     });

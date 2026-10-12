@@ -188,7 +188,7 @@
                         <div class="section-title-row">
                             <div>
                                 <h2>Exploratory Data Analysis (EDA)</h2>
-                                <p>Analyze empirical distributions, statistical dispersion, and multi-variable correlations.</p>
+                                <p>Analyze empirical distributions, statistical dispersion, and multi-variable correlations with crystal-clear readability.</p>
                             </div>
                         </div>
 
@@ -205,26 +205,54 @@
                         </div>
 
                         <div class="charts-grid-2col">
+                            <!-- Numerical Distribution Chart -->
                             <div class="chart-card">
                                 <div class="chart-card-header">
-                                    <h4 id="eda-dist-title">Numerical Distribution</h4>
-                                    <div class="chart-tag" id="eda-dist-tag">Histogram + KDE</div>
+                                    <div class="header-info">
+                                        <h4 id="eda-dist-title">Numerical Distribution</h4>
+                                        <div class="chart-tag" id="eda-dist-tag">Histogram + Density</div>
+                                    </div>
+                                    <div class="chart-actions">
+                                        <button class="btn-action-sm" onclick="zoomChart('chart-eda-distribution', 0.8)" title="Zoom In"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
+                                        <button class="btn-action-sm" onclick="zoomChart('chart-eda-distribution', 1.25)" title="Zoom Out"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
+                                        <button class="btn-action-sm" onclick="resetChart('chart-eda-distribution')" title="Reset Zoom"><i class="fa-solid fa-arrows-rotate"></i></button>
+                                        <button class="btn-action-theater" onclick="openTheater('chart-eda-distribution', 'Numerical Distribution')" title="Theater View"><i class="fa-solid fa-expand"></i> Theater</button>
+                                    </div>
                                 </div>
                                 <div class="chart-plot" id="chart-eda-distribution"></div>
                             </div>
+
+                            <!-- Categorical Bar Chart -->
                             <div class="chart-card">
                                 <div class="chart-card-header">
-                                    <h4 id="eda-cat-title">Category Frequencies</h4>
-                                    <div class="chart-tag" id="eda-cat-tag">Discrete Counts</div>
+                                    <div class="header-info">
+                                        <h4 id="eda-cat-title">Category Frequencies</h4>
+                                        <div class="chart-tag" id="eda-cat-tag">Discrete Counts</div>
+                                    </div>
+                                    <div class="chart-actions">
+                                        <button class="btn-action-sm" onclick="zoomChart('chart-eda-category', 0.8)" title="Zoom In"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
+                                        <button class="btn-action-sm" onclick="zoomChart('chart-eda-category', 1.25)" title="Zoom Out"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
+                                        <button class="btn-action-sm" onclick="resetChart('chart-eda-category')" title="Reset Zoom"><i class="fa-solid fa-arrows-rotate"></i></button>
+                                        <button class="btn-action-theater" onclick="openTheater('chart-eda-category', 'Category Frequencies')" title="Theater View"><i class="fa-solid fa-expand"></i> Theater</button>
+                                    </div>
                                 </div>
                                 <div class="chart-plot" id="chart-eda-category"></div>
                             </div>
                         </div>
 
+                        <!-- Wide Correlation Heatmap -->
                         <div class="chart-card wide-chart-card">
                             <div class="chart-card-header">
-                                <h4>Full Feature Correlation Matrix</h4>
-                                <div class="chart-tag">Pearson Coefficient (r)</div>
+                                <div class="header-info">
+                                    <h4>Full Feature Correlation Matrix</h4>
+                                    <div class="chart-tag">Pearson Coefficient (r)</div>
+                                </div>
+                                <div class="chart-actions">
+                                    <button class="btn-action-sm" onclick="zoomChart('chart-eda-correlation', 0.8)" title="Zoom In"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
+                                    <button class="btn-action-sm" onclick="zoomChart('chart-eda-correlation', 1.25)" title="Zoom Out"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
+                                    <button class="btn-action-sm" onclick="resetChart('chart-eda-correlation')" title="Reset Zoom"><i class="fa-solid fa-arrows-rotate"></i></button>
+                                    <button class="btn-action-theater" onclick="openTheater('chart-eda-correlation', 'Correlation Matrix')" title="Theater View"><i class="fa-solid fa-expand"></i> Theater</button>
+                                </div>
                             </div>
                             <div class="chart-plot" id="chart-eda-correlation"></div>
                         </div>
@@ -237,7 +265,7 @@
                         <div class="section-title-row">
                             <div>
                                 <h2>Train Variational Autoencoder & Synthesize</h2>
-                                <p>Tune latent hyperparameters, train the encoder-decoder network, and generate synthetic rows.</p>
+                                <p>Tune latent hyperparameters, train the neural network with live continuous progress tracking, and generate synthetic records.</p>
                             </div>
                         </div>
 
@@ -262,6 +290,9 @@
                                     <button class="btn btn-primary btn-large" id="btn-generate">
                                         <i class="fa-solid fa-wand-magic-sparkles"></i> Train VAE & Generate
                                     </button>
+                                    <button class="btn btn-danger btn-large hidden" id="btn-stop-training">
+                                        <i class="fa-solid fa-circle-stop"></i> Stop Training
+                                    </button>
                                 </div>
                             </div>
 
@@ -273,15 +304,25 @@
                                 <div class="progress-bar-container">
                                     <div class="progress-bar" id="gen-progress-bar"></div>
                                 </div>
-                                <p class="progress-note"><i class="fa-solid fa-info-circle"></i> Optimizing combined Reconstruction Loss (MSE + Categorical Cross-Entropy) and KL Divergence with beta-annealing.</p>
+                                <div class="progress-live-metrics" id="gen-live-metrics">
+                                    <span><i class="fa-solid fa-circle-notch fa-spin"></i> Preparing batches...</span>
+                                </div>
                             </div>
                         </div>
 
                         <!-- Training History Convergence Curve -->
                         <div class="chart-card wide-chart-card" id="training-loss-card" style="margin-top: 2rem;">
                             <div class="chart-card-header">
-                                <h4>VAE Training Convergence History</h4>
-                                <div class="chart-tag">Total Loss • Reconstruction Loss • KL Loss</div>
+                                <div class="header-info">
+                                    <h4>VAE Training Convergence History</h4>
+                                    <div class="chart-tag">Total Loss • Reconstruction Loss • KL Loss</div>
+                                </div>
+                                <div class="chart-actions">
+                                    <button class="btn-action-sm" onclick="zoomChart('chart-training-loss', 0.8)" title="Zoom In"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
+                                    <button class="btn-action-sm" onclick="zoomChart('chart-training-loss', 1.25)" title="Zoom Out"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
+                                    <button class="btn-action-sm" onclick="resetChart('chart-training-loss')" title="Reset Zoom"><i class="fa-solid fa-arrows-rotate"></i></button>
+                                    <button class="btn-action-theater" onclick="openTheater('chart-training-loss', 'Training Loss Convergence')" title="Theater View"><i class="fa-solid fa-expand"></i> Theater</button>
+                                </div>
                             </div>
                             <div class="chart-plot" id="chart-training-loss">
                                 <div class="chart-placeholder">
@@ -319,15 +360,32 @@
                         <div class="charts-grid-2col">
                             <div class="chart-card">
                                 <div class="chart-card-header">
-                                    <h4 id="compare-num-title">Numerical Distribution Alignment</h4>
-                                    <div class="chart-tag">Real (Blue) vs Synthetic (Purple)</div>
+                                    <div class="header-info">
+                                        <h4 id="compare-num-title">Numerical Distribution Alignment</h4>
+                                        <div class="chart-tag">Real (Blue) vs Synthetic (Purple)</div>
+                                    </div>
+                                    <div class="chart-actions">
+                                        <button class="btn-action-sm" onclick="zoomChart('chart-compare-numeric', 0.8)" title="Zoom In"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
+                                        <button class="btn-action-sm" onclick="zoomChart('chart-compare-numeric', 1.25)" title="Zoom Out"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
+                                        <button class="btn-action-sm" onclick="resetChart('chart-compare-numeric')" title="Reset Zoom"><i class="fa-solid fa-arrows-rotate"></i></button>
+                                        <button class="btn-action-theater" onclick="openTheater('chart-compare-numeric', 'Numerical Distribution Comparison')" title="Theater View"><i class="fa-solid fa-expand"></i> Theater</button>
+                                    </div>
                                 </div>
                                 <div class="chart-plot" id="chart-compare-numeric"></div>
                             </div>
+
                             <div class="chart-card">
                                 <div class="chart-card-header">
-                                    <h4 id="compare-cat-title">Categorical Proportion Alignment</h4>
-                                    <div class="chart-tag">Grouped Class Share (%)</div>
+                                    <div class="header-info">
+                                        <h4 id="compare-cat-title">Categorical Proportion Alignment</h4>
+                                        <div class="chart-tag">Grouped Class Share (%)</div>
+                                    </div>
+                                    <div class="chart-actions">
+                                        <button class="btn-action-sm" onclick="zoomChart('chart-compare-categorical', 0.8)" title="Zoom In"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
+                                        <button class="btn-action-sm" onclick="zoomChart('chart-compare-categorical', 1.25)" title="Zoom Out"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
+                                        <button class="btn-action-sm" onclick="resetChart('chart-compare-categorical')" title="Reset Zoom"><i class="fa-solid fa-arrows-rotate"></i></button>
+                                        <button class="btn-action-theater" onclick="openTheater('chart-compare-categorical', 'Categorical Proportion Comparison')" title="Theater View"><i class="fa-solid fa-expand"></i> Theater</button>
+                                    </div>
                                 </div>
                                 <div class="chart-plot" id="chart-compare-categorical"></div>
                             </div>
@@ -342,15 +400,32 @@
                         <div class="charts-grid-2col" style="margin-top: 2rem;">
                             <div class="chart-card">
                                 <div class="chart-card-header">
-                                    <h4>Real Data Correlation</h4>
-                                    <div class="chart-tag">Original Matrix</div>
+                                    <div class="header-info">
+                                        <h4>Real Data Correlation</h4>
+                                        <div class="chart-tag">Original Matrix</div>
+                                    </div>
+                                    <div class="chart-actions">
+                                        <button class="btn-action-sm" onclick="zoomChart('chart-compare-corr-real', 0.8)" title="Zoom In"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
+                                        <button class="btn-action-sm" onclick="zoomChart('chart-compare-corr-real', 1.25)" title="Zoom Out"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
+                                        <button class="btn-action-sm" onclick="resetChart('chart-compare-corr-real')" title="Reset Zoom"><i class="fa-solid fa-arrows-rotate"></i></button>
+                                        <button class="btn-action-theater" onclick="openTheater('chart-compare-corr-real', 'Real Data Correlation Matrix')" title="Theater View"><i class="fa-solid fa-expand"></i> Theater</button>
+                                    </div>
                                 </div>
                                 <div class="chart-plot" id="chart-compare-corr-real"></div>
                             </div>
+
                             <div class="chart-card">
                                 <div class="chart-card-header">
-                                    <h4>Synthetic Data Correlation</h4>
-                                    <div class="chart-tag">VAE Preserved Matrix</div>
+                                    <div class="header-info">
+                                        <h4>Synthetic Data Correlation</h4>
+                                        <div class="chart-tag">VAE Preserved Matrix</div>
+                                    </div>
+                                    <div class="chart-actions">
+                                        <button class="btn-action-sm" onclick="zoomChart('chart-compare-corr-synth', 0.8)" title="Zoom In"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
+                                        <button class="btn-action-sm" onclick="zoomChart('chart-compare-corr-synth', 1.25)" title="Zoom Out"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
+                                        <button class="btn-action-sm" onclick="resetChart('chart-compare-corr-synth')" title="Reset Zoom"><i class="fa-solid fa-arrows-rotate"></i></button>
+                                        <button class="btn-action-theater" onclick="openTheater('chart-compare-corr-synth', 'Synthetic Data Correlation Matrix')" title="Theater View"><i class="fa-solid fa-expand"></i> Theater</button>
+                                    </div>
                                 </div>
                                 <div class="chart-plot" id="chart-compare-corr-synth"></div>
                             </div>
@@ -467,6 +542,47 @@
                 </section>
             </div>
         </main>
+    </div>
+
+    <!-- ================= THEATER / FULLSCREEN FOCUS VIEW (YOUTUBE-STYLE) ================= -->
+    <div id="theater-modal" class="theater-modal hidden">
+        <div class="theater-backdrop" onclick="closeTheater()"></div>
+        <div class="theater-window">
+            <div class="theater-topbar">
+                <div class="theater-title-group">
+                    <div class="theater-icon-badge"><i class="fa-solid fa-chart-line"></i></div>
+                    <div>
+                        <h3 id="theater-title">Focused Visualization</h3>
+                        <span class="theater-sub">Expanded High-Fidelity Inspection Mode</span>
+                    </div>
+                </div>
+                <div class="theater-controls">
+                    <button class="btn-action-sm btn-theater-zoom" onclick="zoomTheater(0.8)" title="Zoom In (+)"><i class="fa-solid fa-magnifying-glass-plus"></i> Zoom In</button>
+                    <button class="btn-action-sm btn-theater-zoom" onclick="zoomTheater(1.25)" title="Zoom Out (-)"><i class="fa-solid fa-magnifying-glass-minus"></i> Zoom Out</button>
+                    <button class="btn-action-sm btn-theater-zoom" onclick="resetTheater()" title="Reset Zoom"><i class="fa-solid fa-arrows-rotate"></i> Reset</button>
+                    <button class="btn-close-theater" onclick="closeTheater()" title="Exit Theater View (Esc)"><i class="fa-solid fa-xmark"></i> Close (Esc)</button>
+                </div>
+            </div>
+            <div class="theater-body">
+                <div class="theater-stage-container">
+                    <div class="theater-plot" id="theater-plot"></div>
+                </div>
+                <aside class="theater-sidebar">
+                    <div class="sidebar-block">
+                        <h4><i class="fa-solid fa-circle-info"></i> Chart Details</h4>
+                        <div id="theater-info-text" class="theater-info-text">
+                            Full-screen analysis active. Use cursor to drag, pan, or box-select specific regions.
+                        </div>
+                    </div>
+                    <div class="sidebar-block" id="theater-stats-block">
+                        <h4><i class="fa-solid fa-calculator"></i> Key Metrics</h4>
+                        <div id="theater-metrics-content" class="theater-metrics-list">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                </aside>
+            </div>
+        </div>
     </div>
 
     <!-- Main Logic Script -->

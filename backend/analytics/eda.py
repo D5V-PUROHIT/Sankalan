@@ -1,10 +1,29 @@
 import pandas as pd
 import numpy as np
 
+def is_valid_categorical(df: pd.DataFrame, col: str) -> bool:
+    """Filters out IDs, keys, and high-cardinality columns from categorical views."""
+    col_lower = col.lower()
+    if col_lower in ['customerid', 'id', 'uuid', 'guid', 'order_id', 'orderid']:
+        return False
+    if col_lower.endswith('_id') or col_lower.endswith('id'):
+        return False
+        
+    n_unique = df[col].nunique()
+    total_len = len(df)
+    
+    # Must have at least 2 categories and at most 25 categories
+    if n_unique <= 1 or n_unique > 25:
+        return False
+    if total_len > 0 and (n_unique / total_len > 0.15):
+        return False
+        
+    return True
+
 def generate_eda_data(file_path: str):
     """
     Generates rich exploratory data analysis data for the frontend EDA tab.
-    Includes correlation matrix, summary statistics, and column choices.
+    Includes correlation matrix, summary statistics, and clean column choices.
     """
     try:
         if file_path.endswith('.csv'):
@@ -13,7 +32,14 @@ def generate_eda_data(file_path: str):
             df = pd.read_excel(file_path)
             
         num_cols = df.select_dtypes(include=['int64', 'float64', 'int32', 'float32']).columns.tolist()
-        cat_cols = df.select_dtypes(include=['object', 'category', 'bool']).columns.tolist()
+        
+        # Filter raw categorical columns to only genuine categories
+        raw_cat_cols = df.select_dtypes(include=['object', 'category', 'bool']).columns.tolist()
+        cat_cols = [c for c in raw_cat_cols if is_valid_categorical(df, c)]
+        
+        # If no strict categories found, fallback to anything with nunique <= 30
+        if not cat_cols:
+            cat_cols = [c for c in raw_cat_cols if 1 < df[c].nunique() <= 30]
         
         # 1. Numerical Correlation Matrix
         correlation_data = None
@@ -30,7 +56,6 @@ def generate_eda_data(file_path: str):
         for col in num_cols:
             valid_data = pd.to_numeric(df[col], errors='coerce').dropna()
             if len(valid_data) > 0:
-                # Sample up to 3000 points to keep payload snappy
                 sampled = valid_data.sample(min(3000, len(valid_data)), random_state=42).tolist() if len(valid_data) > 3000 else valid_data.tolist()
                 column_distributions[col] = {
                     "values": [round(v, 2) for v in sampled],
@@ -41,10 +66,10 @@ def generate_eda_data(file_path: str):
                     "max": round(float(valid_data.max()), 2)
                 }
                 
-        # 3. Categorical value counts (top 10 categories)
+        # 3. Categorical value counts (top 15 categories max)
         categorical_distributions = {}
         for col in cat_cols:
-            val_counts = df[col].astype(str).value_counts().head(10).to_dict()
+            val_counts = df[col].astype(str).value_counts().head(15).to_dict()
             categorical_distributions[col] = {
                 "labels": list(val_counts.keys()),
                 "counts": list(val_counts.values())
@@ -74,7 +99,11 @@ def generate_comparison_data(real_file_path: str, synth_file_path: str, num_col:
         s_df = pd.read_csv(synth_file_path) if synth_file_path.endswith('.csv') else pd.read_excel(synth_file_path)
 
         num_cols = [c for c in r_df.select_dtypes(include=['int64', 'float64', 'int32', 'float32']).columns if c in s_df.columns]
-        cat_cols = [c for c in r_df.select_dtypes(include=['object', 'category', 'bool']).columns if c in s_df.columns]
+        
+        raw_cat_cols = [c for c in r_df.select_dtypes(include=['object', 'category', 'bool']).columns if c in s_df.columns]
+        cat_cols = [c for c in raw_cat_cols if is_valid_categorical(r_df, c)]
+        if not cat_cols:
+            cat_cols = [c for c in raw_cat_cols if 1 < r_df[c].nunique() <= 30]
 
         # Selected numeric column comparison
         num_distribution_comparison = None
@@ -83,7 +112,6 @@ def generate_comparison_data(real_file_path: str, synth_file_path: str, num_col:
             r_vals = pd.to_numeric(r_df[target_num], errors='coerce').dropna()
             s_vals = pd.to_numeric(s_df[target_num], errors='coerce').dropna()
             
-            # Sample for performance if needed
             r_sample = r_vals.sample(min(3000, len(r_vals)), random_state=42).tolist()
             s_sample = s_vals.sample(min(3000, len(s_vals)), random_state=42).tolist()
             
@@ -114,12 +142,14 @@ def generate_comparison_data(real_file_path: str, synth_file_path: str, num_col:
             r_pct = r_df[target_cat].astype(str).value_counts(normalize=True).to_dict()
             s_pct = s_df[target_cat].astype(str).value_counts(normalize=True).to_dict()
             
-            all_labels = sorted(list(set(r_pct.keys()).union(set(s_pct.keys()))))
+            # Limit to top 15 labels to prevent illegible charts
+            top_labels = r_df[target_cat].astype(str).value_counts().head(15).index.tolist()
+            
             cat_distribution_comparison = {
                 "column": target_cat,
-                "labels": all_labels,
-                "real_pct": [round(r_pct.get(l, 0.0) * 100, 1) for l in all_labels],
-                "synth_pct": [round(s_pct.get(l, 0.0) * 100, 1) for l in all_labels]
+                "labels": top_labels,
+                "real_pct": [round(r_pct.get(l, 0.0) * 100, 1) for l in top_labels],
+                "synth_pct": [round(s_pct.get(l, 0.0) * 100, 1) for l in top_labels]
             }
 
         # Correlation matrices

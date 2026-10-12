@@ -80,7 +80,6 @@ def get_beta(epoch, total_epochs, target_beta=1.0, warmup_frac=0.25):
         return target_beta
     return target_beta * (epoch / max(1.0, warmup_epochs))
 
-@tf.function
 def train_step(model, data, optimizer, feature_map, beta):
     data = tf.cast(data, tf.float32)
     beta = tf.cast(beta, tf.float32)
@@ -103,9 +102,9 @@ def train_step(model, data, optimizer, feature_map, beta):
     
     return {"total_loss": total_loss, "recon_loss": recon_loss, "kl_loss": kl_loss}
 
-def train_vae(X_train, feature_map, latent_dim=8, epochs=50, batch_size=32):
+def train_vae(X_train, feature_map, latent_dim=8, epochs=50, batch_size=32, progress_callback=None, check_stop_callback=None):
     """
-    Sets up the dataset, optimizer, and training loop.
+    Sets up the dataset, optimizer, and training loop with progress tracking and stop support.
     Returns the trained model and training history.
     """
     X_train = np.asarray(X_train, dtype=np.float32)
@@ -113,11 +112,18 @@ def train_vae(X_train, feature_map, latent_dim=8, epochs=50, batch_size=32):
     vae = VAE(input_dim, latent_dim, feature_map)
     optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
     
+    # Initialize weights explicitly
+    vae(tf.zeros((1, input_dim), dtype=tf.float32))
+    
     dataset = tf.data.Dataset.from_tensor_slices(X_train).shuffle(len(X_train)).batch(batch_size)
     
     history = {"total_loss": [], "recon_loss": [], "kl_loss": [], "beta": []}
     
     for epoch in range(epochs):
+        if check_stop_callback and check_stop_callback():
+            print(f"Training stopped early by user at epoch {epoch}/{epochs}")
+            break
+            
         beta = get_beta(epoch, epochs)
         
         epoch_total = 0.0
@@ -132,11 +138,18 @@ def train_vae(X_train, feature_map, latent_dim=8, epochs=50, batch_size=32):
             epoch_kl += float(losses["kl_loss"])
             batches += 1
             
-        history["total_loss"].append(epoch_total / batches)
-        history["recon_loss"].append(epoch_recon / batches)
-        history["kl_loss"].append(epoch_kl / batches)
+        avg_total = epoch_total / max(1, batches)
+        avg_recon = epoch_recon / max(1, batches)
+        avg_kl = epoch_kl / max(1, batches)
+        
+        history["total_loss"].append(avg_total)
+        history["recon_loss"].append(avg_recon)
+        history["kl_loss"].append(avg_kl)
         history["beta"].append(beta)
         
-        print(f"Epoch {epoch+1}/{epochs} - Loss: {epoch_total/batches:.4f} - Recon: {epoch_recon/batches:.4f} - KL: {epoch_kl/batches:.4f} - Beta: {beta:.3f}")
+        print(f"Epoch {epoch+1}/{epochs} - Loss: {avg_total:.4f} - Recon: {avg_recon:.4f} - KL: {avg_kl:.4f} - Beta: {beta:.3f}")
+        
+        if progress_callback:
+            progress_callback(epoch + 1, epochs, avg_total, avg_recon, avg_kl)
         
     return vae, history

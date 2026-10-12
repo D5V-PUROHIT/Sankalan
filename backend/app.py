@@ -27,6 +27,20 @@ os.makedirs(PROCESSED_DIR, exist_ok=True)
 os.makedirs(SYNTHETIC_DIR, exist_ok=True)
 os.makedirs(MODELS_DIR, exist_ok=True)
 
+# Global Live Training Progress State
+TRAINING_STATE = {
+    "is_training": False,
+    "current_epoch": 0,
+    "total_epochs": 0,
+    "loss": 0.0,
+    "recon_loss": 0.0,
+    "kl_loss": 0.0,
+    "percent": 0.0,
+    "status": "idle",
+    "stop_requested": False,
+    "message": "Ready"
+}
+
 
 def get_latest_raw_file():
     raw_files = glob.glob(os.path.join(RAW_DIR, '*'))
@@ -40,7 +54,7 @@ def get_synthetic_file():
 
 @app.get("/api/status")
 async def get_system_status():
-    """Returns the current state of data and models in the system."""
+    """Returns the current state of data, training, and models in the system."""
     raw_file = get_latest_raw_file()
     synth_file = get_synthetic_file()
     report_file = os.path.join(SYNTHETIC_DIR, 'evaluation_report.json')
@@ -49,7 +63,8 @@ async def get_system_status():
         "dataset_loaded": raw_file is not None,
         "raw_filename": os.path.basename(raw_file) if raw_file else None,
         "synthetic_ready": synth_file is not None,
-        "evaluation_ready": os.path.exists(report_file)
+        "evaluation_ready": os.path.exists(report_file),
+        "training": TRAINING_STATE
     }
     
     if synth_file and os.path.exists(report_file):
@@ -61,6 +76,22 @@ async def get_system_status():
             pass
             
     return status
+
+
+@app.get("/api/train/status")
+async def get_train_status():
+    """Live polling endpoint for continuous progress updates and epoch monitoring."""
+    return TRAINING_STATE
+
+
+@app.post("/api/train/stop")
+async def stop_training():
+    """Signal the training loop to stop immediately at the next epoch."""
+    if TRAINING_STATE["is_training"]:
+        TRAINING_STATE["stop_requested"] = True
+        TRAINING_STATE["message"] = "Stopping training..."
+        return {"status": "success", "message": "Stop requested. Training will halt at the current epoch."}
+    return {"status": "idle", "message": "No active training in progress."}
 
 
 @app.post("/api/upload")
@@ -115,12 +146,12 @@ async def get_eda_data():
 @app.post("/api/generate")
 async def generate_synthetic_data(
     num_records: int = Query(5000, ge=50, le=100000), 
-    epochs: int = Query(50, ge=5, le=500),
+    epochs: int = Query(40, ge=5, le=500),
     latent_dim: int = Query(8, ge=2, le=64)
 ):
     """
-    Trains the Variational Autoencoder, samples from latent space, decodes synthetic records,
-    and runs the comprehensive evaluation suite.
+    Trains the Variational Autoencoder with live progress callbacks, samples from latent space,
+    decodes synthetic records, and executes the evaluation suite.
     """
     from models.vae import train_vae
     from analytics.generation import generate_and_inverse_transform
@@ -137,6 +168,15 @@ async def generate_synthetic_data(
         return JSONResponse(status_code=400, content={"message": "Dataset not yet preprocessed. Please re-upload dataset."})
 
     try:
+        # Initialize training state
+        TRAINING_STATE["is_training"] = True
+        TRAINING_STATE["stop_requested"] = False
+        TRAINING_STATE["status"] = "training"
+        TRAINING_STATE["current_epoch"] = 0
+        TRAINING_STATE["total_epochs"] = epochs
+        TRAINING_STATE["percent"] = 5.0
+        TRAINING_STATE["message"] = f"Initializing VAE architecture for {epochs} epochs..."
+
         X_train = np.load(x_train_path)
         with open(roles_path, 'r') as f:
             metadata = json.load(f)
@@ -144,9 +184,33 @@ async def generate_synthetic_data(
         feature_map = metadata["feature_map"]
         column_roles = metadata["roles"]
         
+        def on_epoch_progress(epoch, total_epochs, loss, recon, kl):
+            TRAINING_STATE["current_epoch"] = epoch
+            TRAINING_STATE["total_epochs"] = total_epochs
+            TRAINING_STATE["loss"] = round(loss, 4)
+            TRAINING_STATE["recon_loss"] = round(recon, 4)
+            TRAINING_STATE["kl_loss"] = round(kl, 4)
+            pct = 5.0 + (epoch / total_epochs) * 80.0
+            TRAINING_STATE["percent"] = round(pct, 1)
+            TRAINING_STATE["message"] = f"Epoch {epoch}/{total_epochs} • Loss: {loss:.3f} (Recon: {recon:.3f}, KL: {kl:.3f})"
+
+        def check_stop():
+            return TRAINING_STATE["stop_requested"]
+
         # 1. Train VAE
-        vae_model, history = train_vae(X_train, feature_map, latent_dim=latent_dim, epochs=epochs, batch_size=32)
+        vae_model, history = train_vae(
+            X_train, 
+            feature_map, 
+            latent_dim=latent_dim, 
+            epochs=epochs, 
+            batch_size=32,
+            progress_callback=on_epoch_progress,
+            check_stop_callback=check_stop
+        )
         
+        TRAINING_STATE["percent"] = 88.0
+        TRAINING_STATE["message"] = f"Synthesizing {num_records:,} records and applying inverse transformation..."
+
         # 2. Generate and inverse transform synthetic data
         synth_df = generate_and_inverse_transform(
             vae_model, feature_map, column_roles, num_records, MODELS_DIR, raw_file_path
@@ -156,6 +220,9 @@ async def generate_synthetic_data(
         synth_path = os.path.join(SYNTHETIC_DIR, 'synthetic_data.csv')
         synth_df.to_csv(synth_path, index=False)
         
+        TRAINING_STATE["percent"] = 94.0
+        TRAINING_STATE["message"] = "Computing statistical benchmarks, Wasserstein distances, and privacy checks..."
+
         # 4. Comprehensive Evaluation
         real_df = pd.read_csv(raw_file_path) if raw_file_path.endswith('.csv') else pd.read_excel(raw_file_path)
         eval_report = evaluate_synthetic_data(real_df, synth_df, column_roles)
@@ -165,6 +232,11 @@ async def generate_synthetic_data(
         with open(report_path, 'w') as f:
             json.dump(eval_report, f, indent=4)
             
+        TRAINING_STATE["is_training"] = False
+        TRAINING_STATE["percent"] = 100.0
+        TRAINING_STATE["status"] = "complete"
+        TRAINING_STATE["message"] = "Training & Synthesis complete!"
+
         return {
             "message": "Generation and evaluation complete", 
             "records_generated": num_records,
@@ -175,6 +247,9 @@ async def generate_synthetic_data(
         }
         
     except Exception as e:
+        TRAINING_STATE["is_training"] = False
+        TRAINING_STATE["status"] = "error"
+        TRAINING_STATE["message"] = f"Error: {str(e)}"
         import traceback
         traceback.print_exc()
         return JSONResponse(status_code=500, content={"message": f"Generation failed: {str(e)}"})
