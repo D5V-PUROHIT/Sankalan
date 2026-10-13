@@ -1,0 +1,288 @@
+{
+    "overall_score": 72.3,
+    "statistical_similarity": 77.48,
+    "distribution_similarity": 60.91,
+    "correlation_similarity": 79.84,
+    "categorical_similarity": 51.77,
+    "privacy_score": 100.0,
+    "exact_duplicates_count": 0,
+    "exact_duplicate_rate": 0.0,
+    "downstream_utility": null,
+    "numeric_metrics": [
+        {
+            "column": "Teams",
+            "real_mean": 22.36,
+            "synth_mean": 22.11,
+            "real_std": 7.45,
+            "synth_std": 0.98,
+            "real_median": 20.0,
+            "synth_median": 22.0,
+            "real_min": 13.0,
+            "synth_min": 20.0,
+            "real_max": 32.0,
+            "synth_max": 25.0,
+            "wasserstein_distance": 5.9973,
+            "similarity_score": 68.6
+        },
+        {
+            "column": "Matches",
+            "real_mean": 43.82,
+            "synth_mean": 42.59,
+            "real_std": 17.63,
+            "synth_std": 3.0,
+            "real_median": 45.0,
+            "synth_median": 43.0,
+            "real_min": 17.0,
+            "synth_min": 34.0,
+            "real_max": 64.0,
+            "synth_max": 50.0,
+            "wasserstein_distance": 13.3882,
+            "similarity_score": 69.8
+        }
+    ],
+    "categorical_metrics": [
+        {
+            "column": "Host",
+            "tv_distance": 0.6373,
+            "similarity_score": 36.3,
+            "breakdown": [
+                {
+                    "category": "Argentina",
+                    "real_pct": 4.5,
+                    "synth_pct": 0.0
+                },
+                {
+                    "category": "Brazil",
+                    "real_pct": 9.1,
+                    "synth_pct": 4.5
+                },
+                {
+                    "category": "Chile",
+                    "real_pct": 4.5,
+                    "synth_pct": 1.5
+                },
+                {
+                    "category": "England",
+                    "real_pct": 4.5,
+                    "synth_pct": 0.5
+                },
+                {
+                    "category": "France",
+                    "real_pct": 9.1,
+                    "synth_pct": 0.0
+                },
+                {
+                    "category": "Germany",
+                    "real_pct": 9.1,
+                    "synth_pct": 23.0
+                },
+                {
+                    "category": "Italy",
+                    "real_pct": 9.1,
+                    "synth_pct": 0.0
+                },
+                {
+                    "category": "Korea Republic, Japan",
+                    "real_pct": 4.5,
+                    "synth_pct": 5.5
+                },
+                {
+                    "category": "Mexico",
+                    "real_pct": 9.1,
+                    "synth_pct": 0.0
+                },
+                {
+                    "category": "Qatar",
+                    "real_pct": 4.5,
+                    "synth_pct": 0.0
+                },
+                {
+                    "category": "Russia",
+                    "real_pct": 4.5,
+                    "synth_pct": 27.5
+                },
+                {
+                    "category": "South Africa",
+                    "real_pct": 4.5,
+                    "synth_pct": 8.0
+                },
+                {
+                    "category": "Spain",
+                    "real_pct": 4.5,
+                    "synth_pct": 27.0
+                },
+                {
+                    "category": "Sweden",
+                    "real_pct": 4.5,
+                    "synth_pct": 1.0
+                },
+                {
+                    "category": "Switzerland",
+                    "real_pct": 4.5,
+                    "synth_pct": 0.0
+                },
+                {
+                    "category": "United States",
+                    "real_pct": 4.5,
+                    "synth_pct": 1.5
+                },
+                {
+                    "category": "Uruguay",
+                    "real_pct": 4.5,
+                    "synth_pct": 0.0
+                }
+            ]
+        },
+        {
+            "column": "Champion",
+            "tv_distance": 0.3623,
+            "similarity_score": 63.8,
+            "breakdown": [
+                {
+                    "category": "Argentina",
+                    "real_pct": 13.6,
+                    "synth_pct": 11.0
+                },
+                {
+                    "category": "Brazil",
+                    "real_pct": 22.7,
+                    "synth_pct": 36.5
+                },
+                {
+                    "category": "England",
+                    "real_pct": 4.5,
+                    "synth_pct": 27.0
+                },
+                {
+                    "category": "France",
+                    "real_pct": 9.1,
+                    "synth_pct": 2.5
+                },
+                {
+                    "category": "Germany",
+                    "real_pct": 9.1,
+                    "synth_pct": 2.0
+                },
+                {
+                    "category": "Italy",
+                    "real_pct": 18.2,
+                    "synth_pct": 15.0
+                },
+                {
+                    "category": "Spain",
+                    "real_pct": 4.5,
+                    "synth_pct": 0.0
+                },
+                {
+                    "category": "Uruguay",
+                    "real_pct": 9.1,
+                    "synth_pct": 1.5
+                },
+                {
+                    "category": "West Germany",
+                    "real_pct": 9.1,
+                    "synth_pct": 4.5
+                }
+            ]
+        },
+        {
+            "column": "Runner-Up",
+            "tv_distance": 0.4473,
+            "similarity_score": 55.3,
+            "breakdown": [
+                {
+                    "category": "Argentina",
+                    "real_pct": 13.6,
+                    "synth_pct": 1.5
+                },
+                {
+                    "category": "Brazil",
+                    "real_pct": 9.1,
+                    "synth_pct": 0.0
+                },
+                {
+                    "category": "Croatia",
+                    "real_pct": 4.5,
+                    "synth_pct": 1.5
+                },
+                {
+                    "category": "Czechoslovakia",
+                    "real_pct": 9.1,
+                    "synth_pct": 15.0
+                },
+                {
+                    "category": "France",
+                    "real_pct": 9.1,
+                    "synth_pct": 1.0
+                },
+                {
+                    "category": "Germany",
+                    "real_pct": 4.5,
+                    "synth_pct": 5.5
+                },
+                {
+                    "category": "Hungary",
+                    "real_pct": 9.1,
+                    "synth_pct": 4.5
+                },
+                {
+                    "category": "Italy",
+                    "real_pct": 9.1,
+                    "synth_pct": 6.5
+                },
+                {
+                    "category": "Netherlands",
+                    "real_pct": 13.6,
+                    "synth_pct": 51.5
+                },
+                {
+                    "category": "Sweden",
+                    "real_pct": 4.5,
+                    "synth_pct": 0.0
+                },
+                {
+                    "category": "West Germany",
+                    "real_pct": 13.6,
+                    "synth_pct": 13.0
+                }
+            ]
+        }
+    ],
+    "correlation_data": {
+        "columns": [
+            "Teams",
+            "Matches"
+        ],
+        "real_matrix": [
+            [
+                1.0,
+                0.95
+            ],
+            [
+                0.95,
+                1.0
+            ]
+        ],
+        "synth_matrix": [
+            [
+                1.0,
+                0.143
+            ],
+            [
+                0.143,
+                1.0
+            ]
+        ],
+        "diff_matrix": [
+            [
+                0.0,
+                0.806
+            ],
+            [
+                0.806,
+                0.0
+            ]
+        ],
+        "mae": 0.4032
+    }
+}

@@ -42,9 +42,25 @@ TRAINING_STATE = {
 }
 
 
+ACTIVE_DATASET_META = os.path.join(BASE_DIR, 'data', 'active_dataset.json')
+
 def get_latest_raw_file():
+    # 1. Check if an active dataset was designated on upload
+    if os.path.exists(ACTIVE_DATASET_META):
+        try:
+            with open(ACTIVE_DATASET_META, 'r') as f:
+                meta = json.load(f)
+                active_path = os.path.join(RAW_DIR, meta.get("filename", ""))
+                if os.path.exists(active_path):
+                    return active_path
+        except Exception:
+            pass
+
+    # 2. Fallback to newest modified file in raw directory
     raw_files = glob.glob(os.path.join(RAW_DIR, '*'))
-    return raw_files[0] if raw_files else None
+    if not raw_files:
+        return None
+    return max(raw_files, key=os.path.getmtime)
 
 
 def get_synthetic_file():
@@ -54,24 +70,88 @@ def get_synthetic_file():
 
 @app.get("/api/status")
 async def get_system_status():
-    """Returns the current state of data, training, and models in the system."""
+    """Returns the full persistent state of data, training, and models in the system."""
     raw_file = get_latest_raw_file()
     synth_file = get_synthetic_file()
     report_file = os.path.join(SYNTHETIC_DIR, 'evaluation_report.json')
+    history_file = os.path.join(SYNTHETIC_DIR, 'training_history.json')
+    profile_cache = os.path.join(PROCESSED_DIR, 'profile.json')
+    roles_cache = os.path.join(MODELS_DIR, 'column_roles.json')
     
     status = {
         "dataset_loaded": raw_file is not None,
         "raw_filename": os.path.basename(raw_file) if raw_file else None,
         "synthetic_ready": synth_file is not None,
         "evaluation_ready": os.path.exists(report_file),
-        "training": TRAINING_STATE
+        "training": TRAINING_STATE,
+        "profile": None,
+        "preprocessing": None,
+        "evaluation_report": None,
+        "training_history": None
     }
     
+    # 1. Restore Profile Cache
+    if raw_file:
+        if os.path.exists(profile_cache):
+            try:
+                with open(profile_cache, 'r') as f:
+                    status["profile"] = json.load(f)
+            except Exception:
+                pass
+        else:
+            profile_data = profile_dataset(raw_file)
+            if "error" not in profile_data:
+                try:
+                    with open(profile_cache, 'w') as f:
+                        json.dump(profile_data, f)
+                    status["profile"] = profile_data
+                except Exception:
+                    pass
+
+        # 2. Restore Preprocessing Schema Roles
+        if os.path.exists(roles_cache):
+            try:
+                with open(roles_cache, 'r') as f:
+                    roles_meta = json.load(f)
+                    roles = roles_meta.get("roles", {})
+                    status["preprocessing"] = {
+                        "vae_input_dim": roles_meta.get("total_generative_dim", 0),
+                        "roles_assigned": {
+                            "identifiers": len(roles.get("identifiers", [])),
+                            "dates": len(roles.get("dates", [])),
+                            "numeric": len(roles.get("generative_numeric", [])),
+                            "categorical": len(roles.get("generative_categorical", []))
+                        }
+                    }
+            except Exception:
+                pass
+
+    # 3. Restore Evaluation Report (only if synth dataset matches current raw dataset)
+    if synth_file and raw_file:
+        try:
+            r_df = pd.read_csv(raw_file, nrows=1) if raw_file.endswith('.csv') else pd.read_excel(raw_file, nrows=1)
+            s_df = pd.read_csv(synth_file, nrows=1)
+            common = set(r_df.columns).intersection(set(s_df.columns))
+            if len(common) < len(r_df.columns) * 0.4:
+                synth_file = None
+                status["synthetic_ready"] = False
+        except Exception:
+            pass
+
     if synth_file and os.path.exists(report_file):
         try:
             with open(report_file, 'r') as f:
                 report_data = json.load(f)
-            status["latest_quality_score"] = report_data.get("overall_score", None)
+                status["evaluation_report"] = report_data
+                status["latest_quality_score"] = report_data.get("overall_score", None)
+        except Exception:
+            pass
+
+    # 4. Restore Training History
+    if os.path.exists(history_file):
+        try:
+            with open(history_file, 'r') as f:
+                status["training_history"] = json.load(f)
         except Exception:
             pass
             
@@ -112,6 +192,14 @@ async def upload_dataset(file: UploadFile = File(...)):
     if "error" in profile_result:
         return JSONResponse(status_code=500, content={"message": f"Error profiling dataset: {profile_result['error']}"})
         
+    # Cache profile dataset
+    profile_cache = os.path.join(PROCESSED_DIR, 'profile.json')
+    try:
+        with open(profile_cache, 'w') as f:
+            json.dump(profile_result, f)
+    except Exception:
+        pass
+        
     # Preprocess dataset for VAE
     preprocess_result = clean_and_preprocess(
         file_path, 
@@ -119,6 +207,22 @@ async def upload_dataset(file: UploadFile = File(...)):
         models_dir=MODELS_DIR
     )
         
+    # Save active dataset tracking
+    try:
+        with open(ACTIVE_DATASET_META, 'w') as f:
+            json.dump({"filename": file.filename}, f)
+    except Exception:
+        pass
+
+    # Clear prior synthetic outputs for the previous dataset
+    for fname in ['synthetic_data.csv', 'evaluation_report.json', 'training_history.json']:
+        p = os.path.join(SYNTHETIC_DIR, fname)
+        if os.path.exists(p):
+            try:
+                os.remove(p)
+            except Exception:
+                pass
+
     return {
         "message": "File uploaded, profiled, and preprocessed successfully", 
         "filename": file.filename, 
@@ -227,10 +331,14 @@ async def generate_synthetic_data(
         real_df = pd.read_csv(raw_file_path) if raw_file_path.endswith('.csv') else pd.read_excel(raw_file_path)
         eval_report = evaluate_synthetic_data(real_df, synth_df, column_roles)
         
-        # Save evaluation report to JSON
+        # Save evaluation report and training history to JSON
         report_path = os.path.join(SYNTHETIC_DIR, 'evaluation_report.json')
         with open(report_path, 'w') as f:
             json.dump(eval_report, f, indent=4)
+
+        history_path = os.path.join(SYNTHETIC_DIR, 'training_history.json')
+        with open(history_path, 'w') as f:
+            json.dump(history, f, indent=4)
             
         TRAINING_STATE["is_training"] = False
         TRAINING_STATE["percent"] = 100.0

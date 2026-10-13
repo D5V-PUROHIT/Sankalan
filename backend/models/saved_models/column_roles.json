@@ -1,149 +1,53 @@
 {
     "roles": {
         "identifiers": [
-            "customerID",
-            "TotalCharges"
+            "Year",
+            "TopScorrer",
+            "Attendance",
+            "AttendanceAvg"
         ],
         "dates": [],
         "generative_numeric": [
-            "SeniorCitizen",
-            "tenure",
-            "MonthlyCharges"
+            "Teams",
+            "Matches"
         ],
         "generative_categorical": [
-            "gender",
-            "Partner",
-            "Dependents",
-            "PhoneService",
-            "MultipleLines",
-            "InternetService",
-            "OnlineSecurity",
-            "OnlineBackup",
-            "DeviceProtection",
-            "TechSupport",
-            "StreamingTV",
-            "StreamingMovies",
-            "Contract",
-            "PaperlessBilling",
-            "PaymentMethod",
-            "Churn"
+            "Host",
+            "Champion",
+            "Runner-Up"
         ]
     },
     "feature_map": [
         {
-            "name": "SeniorCitizen",
+            "name": "Teams",
             "type": "numeric",
             "start": 0,
             "end": 1
         },
         {
-            "name": "tenure",
+            "name": "Matches",
             "type": "numeric",
             "start": 1,
             "end": 2
         },
         {
-            "name": "MonthlyCharges",
-            "type": "numeric",
+            "name": "Host",
+            "type": "categorical",
             "start": 2,
-            "end": 3
+            "end": 19
         },
         {
-            "name": "gender",
+            "name": "Champion",
             "type": "categorical",
-            "start": 3,
-            "end": 5
+            "start": 19,
+            "end": 28
         },
         {
-            "name": "Partner",
+            "name": "Runner-Up",
             "type": "categorical",
-            "start": 5,
-            "end": 7
-        },
-        {
-            "name": "Dependents",
-            "type": "categorical",
-            "start": 7,
-            "end": 9
-        },
-        {
-            "name": "PhoneService",
-            "type": "categorical",
-            "start": 9,
-            "end": 11
-        },
-        {
-            "name": "MultipleLines",
-            "type": "categorical",
-            "start": 11,
-            "end": 14
-        },
-        {
-            "name": "InternetService",
-            "type": "categorical",
-            "start": 14,
-            "end": 17
-        },
-        {
-            "name": "OnlineSecurity",
-            "type": "categorical",
-            "start": 17,
-            "end": 20
-        },
-        {
-            "name": "OnlineBackup",
-            "type": "categorical",
-            "start": 20,
-            "end": 23
-        },
-        {
-            "name": "DeviceProtection",
-            "type": "categorical",
-            "start": 23,
-            "end": 26
-        },
-        {
-            "name": "TechSupport",
-            "type": "categorical",
-            "start": 26,
-            "end": 29
-        },
-        {
-            "name": "StreamingTV",
-            "type": "categorical",
-            "start": 29,
-            "end": 32
-        },
-        {
-            "name": "StreamingMovies",
-            "type": "categorical",
-            "start": 32,
-            "end": 35
-        },
-        {
-            "name": "Contract",
-            "type": "categorical",
-            "start": 35,
-            "end": 38
-        },
-        {
-            "name": "PaperlessBilling",
-            "type": "categorical",
-            "start": 38,
-            "end": 40
-        },
-        {
-            "name": "PaymentMethod",
-            "type": "categorical",
-            "start": 40,
-            "end": 44
-        },
-        {
-            "name": "Churn",
-            "type": "categorical",
-            "start": 44,
-            "end": 46
+            "start": 28,
+            "end": 39
         }
     ],
-    "total_generative_dim": 46
+    "total_generative_dim": 39
 }

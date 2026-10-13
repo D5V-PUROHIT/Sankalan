@@ -16,6 +16,14 @@
     --purple-accent: #7c3aed;
     --purple-light: #f3e8ff;
     
+    /* High-contrast Real vs Synthetic Data Visualization Tokens */
+    --real-color: #2563eb;         /* Radiant Royal Blue */
+    --real-color-dark: #1d4ed8;
+    --real-color-light: #eff6ff;
+    --synth-color: #ea580c;        /* Vibrant Sunset Orange / Coral */
+    --synth-color-dark: #c2410c;
+    --synth-color-light: #fff7ed;
+    
     --success-color: #059669;
     --success-light: #ecfdf5;
     --success-border: #a7f3d0;
@@ -880,7 +888,7 @@ body {
 .stats-val-real {
     font-size: 1.1rem;
     font-weight: 800;
-    color: var(--accent-color);
+    color: var(--real-color);
     margin-top: 0.2rem;
     font-family: 'JetBrains Mono', monospace;
 }
@@ -888,7 +896,8 @@ body {
 .stats-val-synth {
     font-size: 1.1rem;
     font-weight: 800;
-    color: var(--purple-accent);
+    color: var(--synth-color);
+    margin-top: 0.2rem;
     font-family: 'JetBrains Mono', monospace;
 }
 

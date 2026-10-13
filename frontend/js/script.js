@@ -175,13 +175,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } else if (sourceChartId === 'chart-compare-numeric' && AppState.comparisonData) {
             const num = AppState.comparisonData.num_distribution;
-            infoText.textContent = `Overlaid empirical comparison between Real (Blue) and VAE Synthetic (Purple) samples for "${num ? num.column : ''}".`;
+            infoText.textContent = `Overlaid empirical comparison between Real (Royal Blue) and VAE Synthetic (Sunset Orange) samples for "${num ? num.column : ''}".`;
             if (num) {
                 metricsContainer.innerHTML = `
-                    <div class="theater-metric-row"><span>Real Mean</span><strong style="color:#4f46e5">${num.real_stats.mean}</strong></div>
-                    <div class="theater-metric-row"><span>Synth Mean</span><strong style="color:#7c3aed">${num.synth_stats.mean}</strong></div>
-                    <div class="theater-metric-row"><span>Real Std</span><strong style="color:#4f46e5">${num.real_stats.std}</strong></div>
-                    <div class="theater-metric-row"><span>Synth Std</span><strong style="color:#7c3aed">${num.synth_stats.std}</strong></div>
+                    <div class="theater-metric-row"><span>Real Mean</span><strong style="color:var(--real-color, #2563eb)">${num.real_stats.mean}</strong></div>
+                    <div class="theater-metric-row"><span>Synth Mean</span><strong style="color:var(--synth-color, #ea580c)">${num.synth_stats.mean}</strong></div>
+                    <div class="theater-metric-row"><span>Real Std</span><strong style="color:var(--real-color, #2563eb)">${num.real_stats.std}</strong></div>
+                    <div class="theater-metric-row"><span>Synth Std</span><strong style="color:var(--synth-color, #ea580c)">${num.synth_stats.std}</strong></div>
                 `;
             }
         } else if (sourceChartId === 'chart-training-loss' && AppState.trainingHistory) {
@@ -218,6 +218,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function switchTab(targetTab) {
+        if (!targetTab) return;
+        localStorage.setItem('sankalan_active_tab', targetTab);
+
         navLinks.forEach(l => l.classList.remove('active'));
         tabPanes.forEach(p => p.classList.remove('active'));
 
@@ -235,7 +238,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Trigger chart rendering & resizing on tab switch
         if (targetTab === 'tab-eda' && !AppState.edaData) {
             loadEDAData();
-        } else if (targetTab === 'tab-compare') {
+        } else if (targetTab === 'tab-compare' && !AppState.comparisonData) {
             loadComparisonData();
         }
 
@@ -248,7 +251,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // -------------------------------------------------------------
-    // Initial System Status Check
+    // Initial System Status Check & State Restoration on Refresh
     // -------------------------------------------------------------
     checkSystemStatus();
 
@@ -257,17 +260,56 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(res => res.json())
             .then(status => {
                 const sysStatus = document.getElementById('system-status');
+
+                // 1. Restore Dataset & Profiling State
                 if (status.dataset_loaded) {
                     sysStatus.textContent = `Dataset Ready: ${status.raw_filename}`;
-                    document.getElementById('demo-banner').style.display = 'flex';
+                    const banner = document.getElementById('demo-banner');
+                    if (banner) banner.style.display = 'flex';
+
+                    if (status.profile) {
+                        AppState.currentProfile = status.profile;
+                        AppState.currentPreprocessing = status.preprocessing;
+                        renderOverviewTable(status.profile, status.preprocessing);
+                    }
+
+                    // Preload EDA in background
                     loadEDAData(false);
                 }
+
+                // 2. Restore Synthesis, Models & Fidelity Reports
                 if (status.synthetic_ready) {
                     document.getElementById('btn-download-csv').disabled = false;
                     document.getElementById('btn-download-report').disabled = false;
+
                     if (status.latest_quality_score) {
                         document.getElementById('quality-score').textContent = `${status.latest_quality_score}%`;
                     }
+
+                    if (status.training_history) {
+                        AppState.trainingHistory = status.training_history;
+                        renderTrainingLossCurve(status.training_history);
+                    }
+
+                    if (status.evaluation_report) {
+                        AppState.qualityReport = status.evaluation_report;
+                        renderQualityReport(status.evaluation_report);
+                    }
+
+                    // Preload Comparison Data
+                    loadComparisonData();
+                }
+
+                // 3. Restore Last Active Tab or Intelligent Default
+                const savedTab = localStorage.getItem('sankalan_active_tab');
+                if (savedTab && document.getElementById(savedTab)) {
+                    switchTab(savedTab);
+                } else if (status.synthetic_ready) {
+                    switchTab('tab-compare');
+                } else if (status.dataset_loaded) {
+                    switchTab('tab-overview');
+                } else {
+                    switchTab('tab-upload');
                 }
             })
             .catch(err => console.log('Status check error:', err));
@@ -336,11 +378,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 AppState.currentProfile = data.profile;
                 AppState.currentPreprocessing = data.preprocessing;
                 AppState.edaData = null;
+                AppState.comparisonData = null;
+                AppState.qualityReport = null;
+                AppState.trainingHistory = null;
+
+                // Reset synthetic generation states for new dataset
+                document.getElementById('btn-download-csv').disabled = true;
+                document.getElementById('btn-download-report').disabled = true;
+                document.getElementById('quality-score').textContent = '--';
 
                 uploadText.textContent = 'Preprocessing complete! Redirecting to Overview...';
                 document.getElementById('system-status').textContent = `Dataset: ${data.filename}`;
 
                 renderOverviewTable(data.profile, data.preprocessing);
+
+                // Fetch fresh EDA data for newly uploaded dataset
+                loadEDAData(false);
 
                 setTimeout(() => {
                     uploadStatus.classList.add('hidden');
@@ -760,17 +813,23 @@ document.addEventListener('DOMContentLoaded', () => {
         const traceReal = {
             x: dist.real_values,
             type: 'histogram',
-            name: 'Real Data',
-            opacity: 0.65,
-            marker: { color: '#4f46e5' }
+            name: 'Real Data (Blue)',
+            opacity: 0.7,
+            marker: { 
+                color: '#2563eb',
+                line: { color: '#1d4ed8', width: 1.5 }
+            }
         };
 
         const traceSynth = {
             x: dist.synth_values,
             type: 'histogram',
-            name: 'Synthetic VAE Data',
-            opacity: 0.65,
-            marker: { color: '#7c3aed' }
+            name: 'Synthetic VAE Data (Orange)',
+            opacity: 0.7,
+            marker: { 
+                color: '#f97316',
+                line: { color: '#ea580c', width: 1.5 }
+            }
         };
 
         const layout = {
@@ -778,7 +837,11 @@ document.addEventListener('DOMContentLoaded', () => {
             barmode: 'overlay',
             xaxis: { ...plotlyLayoutBase.xaxis, title: dist.column, gridcolor: '#e2e8f0' },
             yaxis: { ...plotlyLayoutBase.yaxis, title: 'Sample Count', gridcolor: '#e2e8f0' },
-            legend: { orientation: 'h', y: 1.15 }
+            legend: { 
+                orientation: 'h', 
+                y: 1.15,
+                font: { size: 12, weight: 600 }
+            }
         };
 
         Plotly.newPlot('chart-compare-numeric', [traceReal, traceSynth], layout, plotlyConfig);
@@ -790,8 +853,8 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="stats-grid-row">
                 <div class="stats-item">
                     <div class="stats-item-title">Metric</div>
-                    <div style="font-weight: 800; color: #4f46e5; margin-top: 0.2rem;">Real</div>
-                    <div style="font-weight: 800; color: #7c3aed;">Synthetic</div>
+                    <div style="font-weight: 800; color: #2563eb; margin-top: 0.2rem;"><i class="fa-solid fa-circle" style="font-size:0.6rem; color:#2563eb; margin-right:4px;"></i>Real</div>
+                    <div style="font-weight: 800; color: #ea580c; margin-top: 0.2rem;"><i class="fa-solid fa-circle" style="font-size:0.6rem; color:#ea580c; margin-right:4px;"></i>Synthetic</div>
                 </div>
                 <div class="stats-item">
                     <div class="stats-item-title">Mean</div>
@@ -831,16 +894,22 @@ document.addEventListener('DOMContentLoaded', () => {
             x: cat.labels,
             y: cat.real_pct,
             type: 'bar',
-            name: 'Real %',
-            marker: { color: '#4f46e5' }
+            name: 'Real % (Blue)',
+            marker: { 
+                color: '#2563eb',
+                line: { color: '#1d4ed8', width: 1 }
+            }
         };
 
         const traceSynth = {
             x: cat.labels,
             y: cat.synth_pct,
             type: 'bar',
-            name: 'Synthetic %',
-            marker: { color: '#7c3aed' }
+            name: 'Synthetic % (Orange)',
+            marker: { 
+                color: '#f97316',
+                line: { color: '#ea580c', width: 1 }
+            }
         };
 
         const layout = {
@@ -848,7 +917,11 @@ document.addEventListener('DOMContentLoaded', () => {
             barmode: 'group',
             xaxis: { ...plotlyLayoutBase.xaxis, title: cat.column, tickangle: -20, gridcolor: '#e2e8f0' },
             yaxis: { ...plotlyLayoutBase.yaxis, title: 'Share (%)', gridcolor: '#e2e8f0' },
-            legend: { orientation: 'h', y: 1.15 }
+            legend: { 
+                orientation: 'h', 
+                y: 1.15,
+                font: { size: 12, weight: 600 }
+            }
         };
 
         Plotly.newPlot('chart-compare-categorical', [traceReal, traceSynth], layout, plotlyConfig);
@@ -872,7 +945,7 @@ document.addEventListener('DOMContentLoaded', () => {
             x: corr.columns,
             y: corr.columns,
             type: 'heatmap',
-            colorscale: 'Purples',
+            colorscale: 'Oranges',
             zmin: -1,
             zmax: 1
         };
@@ -955,9 +1028,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 tr.innerHTML = `
                     <td style="font-weight: 700;">${m.column}</td>
                     <td>${m.real_mean}</td>
-                    <td style="color: var(--accent-color); font-weight: 600;">${m.synth_mean}</td>
+                    <td style="color: var(--synth-color); font-weight: 600;">${m.synth_mean}</td>
                     <td>${m.real_std}</td>
-                    <td style="color: var(--accent-color); font-weight: 600;">${m.synth_std}</td>
+                    <td style="color: var(--synth-color); font-weight: 600;">${m.synth_std}</td>
                     <td>${m.wasserstein_distance}</td>
                     <td><span class="badge ${badgeClass}">${m.similarity_score}%</span></td>
                 `;

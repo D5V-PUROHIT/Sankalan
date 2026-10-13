@@ -53,8 +53,29 @@ def generate_and_inverse_transform(vae_model, feature_map, column_roles, num_rec
     numeric_cols = column_roles["generative_numeric"]
     if scaler and numeric_cols:
         synth_df[numeric_cols] = scaler.inverse_transform(synth_df[numeric_cols])
-        # Optional: round numerics if original was int (simple heuristic: if column in original is int, round it)
-        # We'll skip exact type-matching for the MVP, but it's a good enhancement.
+        
+        # Preserve domain constraints & discrete column types from original dataset
+        try:
+            original_df = pd.read_csv(raw_df_path) if raw_df_path.endswith('.csv') else pd.read_excel(raw_df_path)
+            for col in numeric_cols:
+                if col in original_df.columns:
+                    orig_series = pd.to_numeric(original_df[col], errors='coerce').dropna()
+                    if len(orig_series) > 0:
+                        # If original column is integer or discrete (e.g. SeniorCitizen with 0/1 or tenure)
+                        is_int_col = pd.api.types.is_integer_dtype(original_df[col]) or bool((orig_series % 1 == 0).all() and orig_series.nunique() <= 100)
+                        if is_int_col:
+                            synth_df[col] = synth_df[col].round()
+                            synth_df[col] = synth_df[col].clip(lower=orig_series.min(), upper=orig_series.max())
+                            synth_df[col] = synth_df[col].astype(int)
+                        else:
+                            # Clip non-negative floats (e.g., MonthlyCharges, TotalCharges)
+                            if orig_series.min() >= 0:
+                                synth_df[col] = synth_df[col].clip(lower=0.0)
+                            # Generous margin clipping to prevent extreme outlier divergence
+                            margin = (orig_series.max() - orig_series.min()) * 0.1
+                            synth_df[col] = synth_df[col].clip(lower=orig_series.min() - margin, upper=orig_series.max() + margin)
+        except Exception as e:
+            print("Domain constraint preservation error:", e)
     
     # 5. Handle Non-Generative Columns (Dates and Identifiers)
     non_gen_path = os.path.join(models_dir, '../data/processed/non_generative_data.csv')
