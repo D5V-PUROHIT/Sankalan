@@ -1,53 +1,76 @@
 {
     "roles": {
-        "identifiers": [
-            "Year",
-            "TopScorrer",
-            "Attendance",
-            "AttendanceAvg"
-        ],
+        "identifiers": [],
         "dates": [],
         "generative_numeric": [
-            "Teams",
-            "Matches"
+            "Year",
+            "Wins",
+            "Losses",
+            "OT_Losses",
+            "Win_Percentage",
+            "Goals_For",
+            "Goals_Against",
+            "Goal_Difference"
         ],
         "generative_categorical": [
-            "Host",
-            "Champion",
-            "Runner-Up"
+            "Team_Name"
         ]
     },
     "feature_map": [
         {
-            "name": "Teams",
+            "name": "Year",
             "type": "numeric",
             "start": 0,
             "end": 1
         },
         {
-            "name": "Matches",
+            "name": "Wins",
             "type": "numeric",
             "start": 1,
             "end": 2
         },
         {
-            "name": "Host",
-            "type": "categorical",
+            "name": "Losses",
+            "type": "numeric",
             "start": 2,
-            "end": 19
+            "end": 3
         },
         {
-            "name": "Champion",
-            "type": "categorical",
-            "start": 19,
-            "end": 28
+            "name": "OT_Losses",
+            "type": "numeric",
+            "start": 3,
+            "end": 4
         },
         {
-            "name": "Runner-Up",
+            "name": "Win_Percentage",
+            "type": "numeric",
+            "start": 4,
+            "end": 5
+        },
+        {
+            "name": "Goals_For",
+            "type": "numeric",
+            "start": 5,
+            "end": 6
+        },
+        {
+            "name": "Goals_Against",
+            "type": "numeric",
+            "start": 6,
+            "end": 7
+        },
+        {
+            "name": "Goal_Difference",
+            "type": "numeric",
+            "start": 7,
+            "end": 8
+        },
+        {
+            "name": "Team_Name",
             "type": "categorical",
-            "start": 28,
-            "end": 39
+            "start": 8,
+            "end": 43
         }
     ],
-    "total_generative_dim": 39
+    "total_generative_dim": 43
 }

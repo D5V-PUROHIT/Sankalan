@@ -1,288 +1,283 @@
 {
-    "overall_score": 72.3,
-    "statistical_similarity": 77.48,
-    "distribution_similarity": 60.91,
-    "correlation_similarity": 79.84,
-    "categorical_similarity": 51.77,
+    "overall_score": 93.9,
+    "statistical_similarity": 93.13,
+    "distribution_similarity": 87.57,
+    "correlation_similarity": 97.38,
+    "categorical_similarity": 95.67,
     "privacy_score": 100.0,
     "exact_duplicates_count": 0,
     "exact_duplicate_rate": 0.0,
-    "downstream_utility": null,
+    "downstream_utility": {
+        "target_column": "sex",
+        "model": "Random Forest Classifier",
+        "trtr_accuracy": 84.62,
+        "tstr_accuracy": 83.65,
+        "utility_retention_pct": 98.9
+    },
     "numeric_metrics": [
         {
-            "column": "Teams",
-            "real_mean": 22.36,
-            "synth_mean": 22.11,
-            "real_std": 7.45,
-            "synth_std": 0.98,
-            "real_median": 20.0,
-            "synth_median": 22.0,
-            "real_min": 13.0,
-            "synth_min": 20.0,
-            "real_max": 32.0,
-            "synth_max": 25.0,
-            "wasserstein_distance": 5.9973,
-            "similarity_score": 68.6
+            "column": "bill_length_mm",
+            "real_mean": 43.92,
+            "synth_mean": 43.89,
+            "real_std": 5.46,
+            "synth_std": 4.16,
+            "real_median": 44.45,
+            "synth_median": 44.2,
+            "real_min": 32.1,
+            "synth_min": 31.8,
+            "real_max": 59.6,
+            "synth_max": 57.47,
+            "wasserstein_distance": 1.282,
+            "similarity_score": 91.1
         },
         {
-            "column": "Matches",
-            "real_mean": 43.82,
-            "synth_mean": 42.59,
-            "real_std": 17.63,
-            "synth_std": 3.0,
-            "real_median": 45.0,
-            "synth_median": 43.0,
-            "real_min": 17.0,
-            "synth_min": 34.0,
-            "real_max": 64.0,
-            "synth_max": 50.0,
-            "wasserstein_distance": 13.3882,
-            "similarity_score": 69.8
+            "column": "bill_depth_mm",
+            "real_mean": 17.15,
+            "synth_mean": 17.24,
+            "real_std": 1.97,
+            "synth_std": 1.42,
+            "real_median": 17.3,
+            "synth_median": 17.45,
+            "real_min": 13.1,
+            "synth_min": 12.26,
+            "real_max": 21.5,
+            "synth_max": 20.87,
+            "wasserstein_distance": 0.5026,
+            "similarity_score": 89.6
+        },
+        {
+            "column": "flipper_length_mm",
+            "real_mean": 200.92,
+            "synth_mean": 200.55,
+            "real_std": 14.06,
+            "synth_std": 9.98,
+            "real_median": 197.0,
+            "synth_median": 199.0,
+            "real_min": 172.0,
+            "synth_min": 176.0,
+            "real_max": 231.0,
+            "synth_max": 231.0,
+            "wasserstein_distance": 3.9831,
+            "similarity_score": 89.0
+        },
+        {
+            "column": "body_mass_g",
+            "real_mean": 4201.75,
+            "synth_mean": 4185.56,
+            "real_std": 801.95,
+            "synth_std": 579.54,
+            "real_median": 4050.0,
+            "synth_median": 4098.0,
+            "real_min": 2700.0,
+            "synth_min": 2700.0,
+            "real_max": 6300.0,
+            "synth_max": 6292.0,
+            "wasserstein_distance": 206.1432,
+            "similarity_score": 89.9
+        },
+        {
+            "column": "year",
+            "real_mean": 2008.03,
+            "synth_mean": 2008.07,
+            "real_std": 0.82,
+            "synth_std": 0.7,
+            "real_median": 2008.0,
+            "synth_median": 2008.0,
+            "real_min": 2007.0,
+            "synth_min": 2007.0,
+            "real_max": 2009.0,
+            "synth_max": 2009.0,
+            "wasserstein_distance": 0.1746,
+            "similarity_score": 92.3
         }
     ],
     "categorical_metrics": [
         {
-            "column": "Host",
-            "tv_distance": 0.6373,
-            "similarity_score": 36.3,
+            "column": "species",
+            "tv_distance": 0.0127,
+            "similarity_score": 98.7,
             "breakdown": [
                 {
-                    "category": "Argentina",
-                    "real_pct": 4.5,
-                    "synth_pct": 0.0
+                    "category": "Adelie",
+                    "real_pct": 44.2,
+                    "synth_pct": 44.0
                 },
                 {
-                    "category": "Brazil",
-                    "real_pct": 9.1,
-                    "synth_pct": 4.5
+                    "category": "Chinstrap",
+                    "real_pct": 19.8,
+                    "synth_pct": 21.0
                 },
                 {
-                    "category": "Chile",
-                    "real_pct": 4.5,
-                    "synth_pct": 1.5
-                },
-                {
-                    "category": "England",
-                    "real_pct": 4.5,
-                    "synth_pct": 0.5
-                },
-                {
-                    "category": "France",
-                    "real_pct": 9.1,
-                    "synth_pct": 0.0
-                },
-                {
-                    "category": "Germany",
-                    "real_pct": 9.1,
-                    "synth_pct": 23.0
-                },
-                {
-                    "category": "Italy",
-                    "real_pct": 9.1,
-                    "synth_pct": 0.0
-                },
-                {
-                    "category": "Korea Republic, Japan",
-                    "real_pct": 4.5,
-                    "synth_pct": 5.5
-                },
-                {
-                    "category": "Mexico",
-                    "real_pct": 9.1,
-                    "synth_pct": 0.0
-                },
-                {
-                    "category": "Qatar",
-                    "real_pct": 4.5,
-                    "synth_pct": 0.0
-                },
-                {
-                    "category": "Russia",
-                    "real_pct": 4.5,
-                    "synth_pct": 27.5
-                },
-                {
-                    "category": "South Africa",
-                    "real_pct": 4.5,
-                    "synth_pct": 8.0
-                },
-                {
-                    "category": "Spain",
-                    "real_pct": 4.5,
-                    "synth_pct": 27.0
-                },
-                {
-                    "category": "Sweden",
-                    "real_pct": 4.5,
-                    "synth_pct": 1.0
-                },
-                {
-                    "category": "Switzerland",
-                    "real_pct": 4.5,
-                    "synth_pct": 0.0
-                },
-                {
-                    "category": "United States",
-                    "real_pct": 4.5,
-                    "synth_pct": 1.5
-                },
-                {
-                    "category": "Uruguay",
-                    "real_pct": 4.5,
-                    "synth_pct": 0.0
+                    "category": "Gentoo",
+                    "real_pct": 36.0,
+                    "synth_pct": 35.0
                 }
             ]
         },
         {
-            "column": "Champion",
-            "tv_distance": 0.3623,
-            "similarity_score": 63.8,
+            "column": "island",
+            "tv_distance": 0.083,
+            "similarity_score": 91.7,
             "breakdown": [
                 {
-                    "category": "Argentina",
-                    "real_pct": 13.6,
-                    "synth_pct": 11.0
+                    "category": "Biscoe",
+                    "real_pct": 48.8,
+                    "synth_pct": 53.5
                 },
                 {
-                    "category": "Brazil",
-                    "real_pct": 22.7,
-                    "synth_pct": 36.5
+                    "category": "Dream",
+                    "real_pct": 36.0,
+                    "synth_pct": 39.7
                 },
                 {
-                    "category": "England",
-                    "real_pct": 4.5,
-                    "synth_pct": 27.0
-                },
-                {
-                    "category": "France",
-                    "real_pct": 9.1,
-                    "synth_pct": 2.5
-                },
-                {
-                    "category": "Germany",
-                    "real_pct": 9.1,
-                    "synth_pct": 2.0
-                },
-                {
-                    "category": "Italy",
-                    "real_pct": 18.2,
-                    "synth_pct": 15.0
-                },
-                {
-                    "category": "Spain",
-                    "real_pct": 4.5,
-                    "synth_pct": 0.0
-                },
-                {
-                    "category": "Uruguay",
-                    "real_pct": 9.1,
-                    "synth_pct": 1.5
-                },
-                {
-                    "category": "West Germany",
-                    "real_pct": 9.1,
-                    "synth_pct": 4.5
+                    "category": "Torgersen",
+                    "real_pct": 15.1,
+                    "synth_pct": 6.8
                 }
             ]
         },
         {
-            "column": "Runner-Up",
-            "tv_distance": 0.4473,
-            "similarity_score": 55.3,
+            "column": "sex",
+            "tv_distance": 0.0341,
+            "similarity_score": 96.6,
             "breakdown": [
                 {
-                    "category": "Argentina",
-                    "real_pct": 13.6,
-                    "synth_pct": 1.5
+                    "category": "female",
+                    "real_pct": 48.0,
+                    "synth_pct": 51.4
                 },
                 {
-                    "category": "Brazil",
-                    "real_pct": 9.1,
+                    "category": "male",
+                    "real_pct": 48.8,
+                    "synth_pct": 48.6
+                },
+                {
+                    "category": "nan",
+                    "real_pct": 3.2,
                     "synth_pct": 0.0
-                },
-                {
-                    "category": "Croatia",
-                    "real_pct": 4.5,
-                    "synth_pct": 1.5
-                },
-                {
-                    "category": "Czechoslovakia",
-                    "real_pct": 9.1,
-                    "synth_pct": 15.0
-                },
-                {
-                    "category": "France",
-                    "real_pct": 9.1,
-                    "synth_pct": 1.0
-                },
-                {
-                    "category": "Germany",
-                    "real_pct": 4.5,
-                    "synth_pct": 5.5
-                },
-                {
-                    "category": "Hungary",
-                    "real_pct": 9.1,
-                    "synth_pct": 4.5
-                },
-                {
-                    "category": "Italy",
-                    "real_pct": 9.1,
-                    "synth_pct": 6.5
-                },
-                {
-                    "category": "Netherlands",
-                    "real_pct": 13.6,
-                    "synth_pct": 51.5
-                },
-                {
-                    "category": "Sweden",
-                    "real_pct": 4.5,
-                    "synth_pct": 0.0
-                },
-                {
-                    "category": "West Germany",
-                    "real_pct": 13.6,
-                    "synth_pct": 13.0
                 }
             ]
         }
     ],
     "correlation_data": {
         "columns": [
-            "Teams",
-            "Matches"
+            "bill_length_mm",
+            "bill_depth_mm",
+            "flipper_length_mm",
+            "body_mass_g",
+            "year"
         ],
         "real_matrix": [
             [
                 1.0,
-                0.95
+                -0.235,
+                0.656,
+                0.595,
+                0.055
             ],
             [
-                0.95,
+                -0.235,
+                1.0,
+                -0.584,
+                -0.472,
+                -0.06
+            ],
+            [
+                0.656,
+                -0.584,
+                1.0,
+                0.871,
+                0.17
+            ],
+            [
+                0.595,
+                -0.472,
+                0.871,
+                1.0,
+                0.042
+            ],
+            [
+                0.055,
+                -0.06,
+                0.17,
+                0.042,
                 1.0
             ]
         ],
         "synth_matrix": [
             [
                 1.0,
-                0.143
+                -0.146,
+                0.738,
+                0.716,
+                -0.045
             ],
             [
-                0.143,
+                -0.146,
+                1.0,
+                -0.592,
+                -0.485,
+                0.057
+            ],
+            [
+                0.738,
+                -0.592,
+                1.0,
+                0.961,
+                0.15
+            ],
+            [
+                0.716,
+                -0.485,
+                0.961,
+                1.0,
+                0.058
+            ],
+            [
+                -0.045,
+                0.057,
+                0.15,
+                0.058,
                 1.0
             ]
         ],
         "diff_matrix": [
             [
                 0.0,
-                0.806
+                0.09,
+                0.082,
+                0.121,
+                0.099
             ],
             [
-                0.806,
+                0.09,
+                0.0,
+                0.008,
+                0.013,
+                0.117
+            ],
+            [
+                0.082,
+                0.008,
+                0.0,
+                0.089,
+                0.02
+            ],
+            [
+                0.121,
+                0.013,
+                0.089,
+                0.0,
+                0.016
+            ],
+            [
+                0.099,
+                0.117,
+                0.02,
+                0.016,
                 0.0
             ]
         ],
-        "mae": 0.4032
+        "mae": 0.0524
     }
 }

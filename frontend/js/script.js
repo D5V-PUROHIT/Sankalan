@@ -784,24 +784,32 @@ document.addEventListener('DOMContentLoaded', () => {
         const numSelect = document.getElementById('compare-num-select');
         const catSelect = document.getElementById('compare-cat-select');
 
-        if (numSelect.children.length === 0 && data.available_num_columns) {
+        if (numSelect && data.available_num_columns && data.available_num_columns.length) {
+            numSelect.innerHTML = '';
             data.available_num_columns.forEach(c => {
                 const opt = document.createElement('option');
                 opt.value = c;
                 opt.textContent = c;
                 numSelect.appendChild(opt);
             });
-            numSelect.onchange = () => loadComparisonData(numSelect.value, catSelect.value);
+            if (data.num_distribution && data.num_distribution.column) {
+                numSelect.value = data.num_distribution.column;
+            }
+            numSelect.onchange = () => loadComparisonData(numSelect.value, catSelect ? catSelect.value : null);
         }
 
-        if (catSelect.children.length === 0 && data.available_cat_columns) {
+        if (catSelect && data.available_cat_columns && data.available_cat_columns.length) {
+            catSelect.innerHTML = '';
             data.available_cat_columns.forEach(c => {
                 const opt = document.createElement('option');
                 opt.value = c;
                 opt.textContent = c;
                 catSelect.appendChild(opt);
             });
-            catSelect.onchange = () => loadComparisonData(numSelect.value, catSelect.value);
+            if (data.cat_distribution && data.cat_distribution.column) {
+                catSelect.value = data.cat_distribution.column;
+            }
+            catSelect.onchange = () => loadComparisonData(numSelect ? numSelect.value : null, catSelect.value);
         }
     }
 

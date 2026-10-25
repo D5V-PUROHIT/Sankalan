@@ -8,12 +8,13 @@ def profile_dataset(file_path: str) -> dict:
     """
     try:
         # Determine file type and read accordingly
-        if file_path.endswith('.csv'):
+        fp_lower = file_path.lower()
+        if fp_lower.endswith('.csv'):
             df = pd.read_csv(file_path)
-        elif file_path.endswith('.xlsx'):
+        elif fp_lower.endswith(('.xlsx', '.xls')):
             df = pd.read_excel(file_path)
         else:
-            raise ValueError("Unsupported file format.")
+            raise ValueError("Unsupported file format. Please upload CSV or Excel files.")
 
         # 1. Basic Shape
         num_rows = len(df)

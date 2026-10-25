@@ -10,9 +10,10 @@ def clean_and_preprocess(file_path: str, output_dir: str = "backend/data/process
     Implements Addendum A: Column Role Classification & VAE preprocessing.
     """
     try:
-        if file_path.endswith('.csv'):
+        fp_lower = file_path.lower()
+        if fp_lower.endswith('.csv'):
             df = pd.read_csv(file_path)
-        elif file_path.endswith('.xlsx'):
+        elif fp_lower.endswith(('.xlsx', '.xls')):
             df = pd.read_excel(file_path)
         else:
             raise ValueError("Unsupported file format.")

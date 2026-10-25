@@ -6,3 +6,5 @@ scipy
 tensorflow
 python-multipart
 scikit-learn
+openpyxl
+xlrd

@@ -129,7 +129,7 @@ async def get_system_status():
     # 3. Restore Evaluation Report (only if synth dataset matches current raw dataset)
     if synth_file and raw_file:
         try:
-            r_df = pd.read_csv(raw_file, nrows=1) if raw_file.endswith('.csv') else pd.read_excel(raw_file, nrows=1)
+            r_df = pd.read_csv(raw_file, nrows=1) if raw_file.lower().endswith('.csv') else pd.read_excel(raw_file, nrows=1)
             s_df = pd.read_csv(synth_file, nrows=1)
             common = set(r_df.columns).intersection(set(s_df.columns))
             if len(common) < len(r_df.columns) * 0.4:
@@ -179,8 +179,8 @@ async def upload_dataset(file: UploadFile = File(...)):
     """
     Receives a dataset, cleans it, profiles it, and prepares VAE preprocessing tensors.
     """
-    if not file.filename.endswith(('.csv', '.xlsx')):
-        return JSONResponse(status_code=400, content={"message": "Invalid file format. Only CSV and Excel supported."})
+    if not file.filename.lower().endswith(('.csv', '.xlsx', '.xls')):
+        return JSONResponse(status_code=400, content={"message": "Invalid file format. Only CSV and Excel (.xlsx, .xls) supported."})
         
     file_path = os.path.join(RAW_DIR, file.filename)
     with open(file_path, "wb") as buffer:
